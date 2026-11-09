@@ -1,0 +1,536 @@
+{
+ "format": "avp1-test-vectors",
+ "version": "0.3",
+ "source": "docs/avp1-protocol.md 골든 테스트 벡터 절(TV23~TV35)",
+ "compare": {
+  "f32_fields": [
+   "ai_score",
+   "value",
+   "scale",
+   "offset",
+   "values",
+   "data"
+  ],
+  "note": "avp1-v0.2.json 과 같은 비교 규칙. encode 가 false 면 인코드 시험을 하지 않음(trailing_offset 은 인코더가 무시). session 은 세션 규칙 시험용이고 코덱은 쓰지 않음"
+ },
+ "dict": {
+  "targets": [
+   "",
+   "search_box",
+   "result_list",
+   "cart_button"
+  ],
+  "routes": [
+   "",
+   "/shop",
+   "/shop/cart"
+  ]
+ },
+ "vectors": [
+  {
+   "id": "TV23",
+   "name": "WELCOME v0.3(외부 사이트, block_threshold_milli 900, captcha_trigger 보호 행동)",
+   "direction": "server_to_client",
+   "hex": "41 56 01 03 00 00 00 00 01 00 00 00 84 03 00 00 00 00 00 00 31 00 00 00 02 01 9A 6A 3C 5E 10 7C 4B 8F 21 3D 9E 0B 7A 4C 13 28 84 31 7B CD 5F 06 00 00 05 32 98 75 E8 07 90 4E 03 A0 06 90 4E 80 80 04 80 08 40 00 84 03 00",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "CONTROL",
+     "flags": [],
+     "event_count": 0,
+     "seq": 1,
+     "timestamp_us": 900,
+     "payload_length": 49
+    },
+    "control": {
+     "subtype": "WELCOME",
+     "session_id": "019a6a3c5e107c4b8f213d9e0b7a4c13",
+     "server_open_unix_us": 1794186000041000,
+     "caps": 0,
+     "server_flags": 5,
+     "flush_ms": 50,
+     "keepalive_ms": 15000,
+     "infer_interval_ms": 1000,
+     "window_ms": 10000,
+     "min_action_events": 3,
+     "captcha_threshold_milli": 800,
+     "captcha_sustain_ms": 10000,
+     "max_payload_bytes": 65536,
+     "max_events_per_frame": 1024,
+     "max_unacked_frames": 64,
+     "dict": {},
+     "block_threshold_milli": 900,
+     "captcha_trigger": "protected_action"
+    }
+   }
+  },
+  {
+   "id": "TV24",
+   "name": "보호 행동: CHECKPOINT, TARGET_INFO, 누름, 뗌, PROTECTED_ACTION(구매)",
+   "direction": "client_to_server",
+   "hex": "41 56 01 01 0C 00 05 00 07 00 00 00 00 1B B7 00 00 00 00 00 36 00 00 00 50 09 00 78 07 E8 07 D8 04 00 00 30 0C 80 EA 30 03 01 03 98 07 B0 04 78 28 02 09 00 80 08 D8 04 00 00 01 03 03 0B 80 E2 09 80 08 D8 04 00 00 01 03 39 03 00 01 03",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "DATA",
+     "flags": [
+      "HAS_CHECKPOINT",
+      "ACK_REQUESTED"
+     ],
+     "event_count": 5,
+     "seq": 7,
+     "timestamp_us": 12000000,
+     "payload_length": 54
+    },
+    "events": [
+     {
+      "t_us": 12000000,
+      "event_seq": 120,
+      "event_type": "CHECKPOINT",
+      "pointer_known": true,
+      "doc_visible": true,
+      "window_focused": true,
+      "pointer_type": "mouse",
+      "x": 500,
+      "y": 300,
+      "scroll_y": 0,
+      "anchor": 0
+     },
+     {
+      "t_us": 12400000,
+      "event_seq": 121,
+      "event_type": "TARGET_INFO",
+      "target": 3,
+      "target_role": "button",
+      "av_key": "cart_button",
+      "target_bbox": [
+       460,
+       280,
+       120,
+       40
+      ]
+     },
+     {
+      "t_us": 12400000,
+      "event_seq": 122,
+      "event_type": "POINTER_DOWN",
+      "x": 512,
+      "y": 300,
+      "button": 0,
+      "pointer_type": "mouse",
+      "trusted": true,
+      "target": 3
+     },
+     {
+      "t_us": 12480000,
+      "event_seq": 123,
+      "event_type": "POINTER_UP",
+      "x": 512,
+      "y": 300,
+      "button": 0,
+      "pointer_type": "mouse",
+      "trusted": true,
+      "target": 3
+     },
+     {
+      "t_us": 12480000,
+      "event_seq": 124,
+      "event_type": "PROTECTED_ACTION",
+      "action_kind": "purchase",
+      "target": 3
+     }
+    ]
+   }
+  },
+  {
+   "id": "TV25",
+   "name": "STATE BLOCKED(block_after_captcha_fail)",
+   "direction": "server_to_client",
+   "hex": "41 56 01 06 00 00 00 00 09 00 00 00 80 C3 C9 01 00 00 00 00 06 00 00 00 07 09 0C 00 00 00",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "STATE",
+     "flags": [],
+     "event_count": 0,
+     "seq": 9,
+     "timestamp_us": 30000000,
+     "payload_length": 6
+    },
+    "state": {
+     "state": "BLOCKED",
+     "reason": "block_after_captcha_fail",
+     "window_id": 12
+    }
+   }
+  },
+  {
+   "id": "TV26",
+   "name": "STATE BLOCKED(block_above_threshold)",
+   "direction": "server_to_client",
+   "hex": "41 56 01 06 00 00 00 00 09 00 00 00 80 C3 C9 01 00 00 00 00 06 00 00 00 07 0A 0C 00 00 00",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "STATE",
+     "flags": [],
+     "event_count": 0,
+     "seq": 9,
+     "timestamp_us": 30000000,
+     "payload_length": 6
+    },
+    "state": {
+     "state": "BLOCKED",
+     "reason": "block_above_threshold",
+     "window_id": 12
+    }
+   }
+  },
+  {
+   "id": "TV27",
+   "name": "STATE SCORING(action_allowed)",
+   "direction": "server_to_client",
+   "hex": "41 56 01 06 00 00 00 00 08 00 00 00 80 C3 C9 01 00 00 00 00 06 00 00 00 02 0B 05 00 00 00",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "STATE",
+     "flags": [],
+     "event_count": 0,
+     "seq": 8,
+     "timestamp_us": 30000000,
+     "payload_length": 6
+    },
+    "state": {
+     "state": "SCORING",
+     "reason": "action_allowed",
+     "window_id": 5
+    }
+   }
+  },
+  {
+   "id": "TV28",
+   "name": "CAPTCHA_CHALLENGE(action_above_threshold)",
+   "direction": "server_to_client",
+   "hex": "41 56 01 03 00 00 00 00 06 00 00 00 C0 AC D8 00 00 00 00 00 87 00 00 00 0A 07 63 68 5F 39 62 32 31 01 05 00 00 00 03 E0 D4 03 01 D5 F8 02 70 7B 22 6B 69 6E 64 22 3A 22 67 75 69 64 65 5F 73 6F 6C 22 2C 22 70 72 6F 6D 70 74 5F 63 6F 64 65 22 3A 22 62 72 69 6E 67 5F 73 6F 6C 5F 68 6F 6D 65 22 2C 22 61 73 73 65 74 73 22 3A 5B 7B 22 69 6E 64 65 78 22 3A 30 2C 22 6E 61 6D 65 22 3A 22 73 74 61 67 65 2E 70 6E 67 22 2C 22 74 79 70 65 22 3A 22 69 6D 61 67 65 2F 70 6E 67 22 7D 5D 7D",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "CONTROL",
+     "flags": [],
+     "event_count": 0,
+     "seq": 6,
+     "timestamp_us": 14200000,
+     "payload_length": 135
+    },
+    "control": {
+     "subtype": "CAPTCHA_CHALLENGE",
+     "challenge_id": "ch_9b21",
+     "challenge_no": 1,
+     "window_id": 5,
+     "reason": "action_above_threshold",
+     "ttl_ms": 60000,
+     "asset_count": 1,
+     "asset_total_bytes": 48213,
+     "meta": {
+      "kind": "guide_sol",
+      "prompt_code": "bring_sol_home",
+      "assets": [
+       {
+        "index": 0,
+        "name": "stage.png",
+        "type": "image/png"
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "TV29",
+   "name": "CAPTCHA_ANSWER(문제별 답, elapsed_ms, trajectory 요약)",
+   "direction": "client_to_server",
+   "hex": "41 56 01 03 00 00 00 00 09 00 00 00 40 D0 1B 01 00 00 00 00 81 01 00 00 08 07 63 68 5F 39 62 32 31 00 F5 02 7B 22 72 65 61 63 68 65 64 22 3A 74 72 75 65 2C 22 65 6C 61 70 73 65 64 5F 6D 73 22 3A 34 32 31 30 2C 22 74 72 61 6A 65 63 74 6F 72 79 22 3A 7B 22 76 22 3A 31 2C 22 6E 22 3A 31 38 32 2C 22 64 75 72 61 74 69 6F 6E 4D 73 22 3A 33 36 34 30 2C 22 70 61 74 68 4C 65 6E 67 74 68 50 78 22 3A 38 31 32 2E 32 35 2C 22 73 74 72 61 69 67 68 74 6E 65 73 73 22 3A 30 2E 34 31 32 2C 22 73 70 65 65 64 4D 65 61 6E 22 3A 30 2E 32 33 31 2C 22 73 70 65 65 64 43 56 22 3A 30 2E 35 38 37 2C 22 70 61 75 73 65 43 6F 75 6E 74 22 3A 33 2C 22 73 75 62 4D 6F 76 65 6D 65 6E 74 73 22 3A 39 2C 22 6A 69 74 74 65 72 50 78 22 3A 30 2E 34 38 32 2C 22 6D 61 78 4A 75 6D 70 50 78 22 3A 31 34 2E 35 2C 22 64 74 43 56 22 3A 30 2E 33 31 31 2C 22 73 70 65 65 64 50 72 6F 66 69 6C 65 22 3A 5B 30 2E 30 35 2C 30 2E 31 32 2C 30 2E 33 31 2C 30 2E 34 34 2C 30 2E 33 38 2C 30 2E 32 37 2C 30 2E 31 39 2C 30 2E 32 32 2C 30 2E 33 35 2C 30 2E 34 31 2C 30 2E 33 33 2C 30 2E 32 35 2C 30 2E 31 38 2C 30 2E 31 34 2C 30 2E 32 31 2C 30 2E 32 39 2C 30 2E 33 36 2C 30 2E 33 2C 30 2E 32 34 2C 30 2E 31 37 2C 30 2E 31 31 2C 30 2E 30 38 2C 30 2E 30 36 2C 30 2E 30 33 5D 7D 7D",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "CONTROL",
+     "flags": [],
+     "event_count": 0,
+     "seq": 9,
+     "timestamp_us": 18600000,
+     "payload_length": 385
+    },
+    "control": {
+     "subtype": "CAPTCHA_ANSWER",
+     "challenge_id": "ch_9b21",
+     "status": "answered",
+     "answer": {
+      "reached": true,
+      "elapsed_ms": 4210,
+      "trajectory": {
+       "v": 1,
+       "n": 182,
+       "durationMs": 3640,
+       "pathLengthPx": 812.25,
+       "straightness": 0.412,
+       "speedMean": 0.231,
+       "speedCV": 0.587,
+       "pauseCount": 3,
+       "subMovements": 9,
+       "jitterPx": 0.482,
+       "maxJumpPx": 14.5,
+       "dtCV": 0.311,
+       "speedProfile": [
+        0.05,
+        0.12,
+        0.31,
+        0.44,
+        0.38,
+        0.27,
+        0.19,
+        0.22,
+        0.35,
+        0.41,
+        0.33,
+        0.25,
+        0.18,
+        0.14,
+        0.21,
+        0.29,
+        0.36,
+        0.3,
+        0.24,
+        0.17,
+        0.11,
+        0.08,
+        0.06,
+        0.03
+       ]
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "TV30",
+   "name": "CAPTCHA_RESULT(통과, 다음 상태 BLOCKED)",
+   "direction": "server_to_client",
+   "hex": "41 56 01 03 00 00 00 00 0A 00 00 00 C0 EA 21 01 00 00 00 00 0B 00 00 00 0B 07 63 68 5F 39 62 32 31 01 07",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "CONTROL",
+     "flags": [],
+     "event_count": 0,
+     "seq": 10,
+     "timestamp_us": 19000000,
+     "payload_length": 11
+    },
+    "control": {
+     "subtype": "CAPTCHA_RESULT",
+     "challenge_id": "ch_9b21",
+     "result": "pass",
+     "next_state": "BLOCKED"
+    }
+   }
+  },
+  {
+   "id": "TV31",
+   "name": "FINISH(blocked)",
+   "direction": "client_to_server",
+   "hex": "41 56 01 03 00 00 00 00 0B 00 00 00 60 71 23 01 00 00 00 00 06 00 00 00 04 06 0A 8C 01 00",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "CONTROL",
+     "flags": [],
+     "event_count": 0,
+     "seq": 11,
+     "timestamp_us": 19100000,
+     "payload_length": 6
+    },
+    "control": {
+     "subtype": "FINISH",
+     "reason": "blocked",
+     "last_data_seq": 10,
+     "event_count": 140,
+     "collection_loss_count": 0
+    }
+   }
+  },
+  {
+   "id": "TV32",
+   "name": "FINISH 뒤 DATA(CHECKPOINT, CAPTCHA_VIEW shown, 이동), FINAL 챌린지 열림",
+   "direction": "client_to_server",
+   "hex": "41 56 01 01 04 00 03 00 0E 00 00 00 00 5A 62 02 00 00 00 00 22 00 00 00 50 0A 00 96 01 07 D8 04 90 03 00 00 62 0D 80 FA 01 01 01 90 03 F0 01 E0 03 E8 02 01 05 A0 93 04 08 05",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "DATA",
+     "flags": [
+      "HAS_CHECKPOINT"
+     ],
+     "event_count": 3,
+     "seq": 14,
+     "timestamp_us": 40000000,
+     "payload_length": 34
+    },
+    "events": [
+     {
+      "t_us": 40000000,
+      "event_seq": 150,
+      "event_type": "CHECKPOINT",
+      "pointer_known": true,
+      "doc_visible": true,
+      "window_focused": true,
+      "pointer_type": "mouse",
+      "x": 300,
+      "y": 200,
+      "scroll_y": 0,
+      "anchor": 0
+     },
+     {
+      "t_us": 40016000,
+      "event_seq": 151,
+      "event_type": "CAPTCHA_VIEW",
+      "phase": "shown",
+      "challenge_no": 1,
+      "view_x": 200,
+      "view_y": 120,
+      "view_w": 480,
+      "view_h": 360
+     },
+     {
+      "t_us": 40050000,
+      "event_seq": 152,
+      "event_type": "POINTER_MOVE",
+      "dx": 4,
+      "dy": -3,
+      "x": 304,
+      "y": 197
+     }
+    ]
+   },
+   "session": {
+    "after_finish": true,
+    "final_challenge_open": true,
+    "expect": "accept"
+   }
+  },
+  {
+   "id": "TV33",
+   "name": "FINISH 뒤 DATA(CHECKPOINT, 누름), 챌린지 없음",
+   "direction": "client_to_server",
+   "hex": "41 56 01 01 0C 00 02 00 0D 00 00 00 40 9C 71 02 00 00 00 00 19 00 00 00 50 0A 00 8D 01 07 D8 04 90 03 00 00 02 0B C0 9A 0C D8 04 90 03 00 00 01 00",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "DATA",
+     "flags": [
+      "HAS_CHECKPOINT",
+      "ACK_REQUESTED"
+     ],
+     "event_count": 2,
+     "seq": 13,
+     "timestamp_us": 41000000,
+     "payload_length": 25
+    },
+    "events": [
+     {
+      "t_us": 41000000,
+      "event_seq": 141,
+      "event_type": "CHECKPOINT",
+      "pointer_known": true,
+      "doc_visible": true,
+      "window_focused": true,
+      "pointer_type": "mouse",
+      "x": 300,
+      "y": 200,
+      "scroll_y": 0,
+      "anchor": 0
+     },
+     {
+      "t_us": 41100000,
+      "event_seq": 142,
+      "event_type": "POINTER_DOWN",
+      "x": 300,
+      "y": 200,
+      "button": 0,
+      "pointer_type": "mouse",
+      "trusted": true,
+      "target": null
+     }
+    ]
+   },
+   "session": {
+    "after_finish": true,
+    "final_challenge_open": false,
+    "expect": "E_STATE"
+   }
+  },
+  {
+   "id": "TV34",
+   "name": "CONTROL(STOP) 끝에 남는 바이트 3개",
+   "direction": "server_to_client",
+   "hex": "41 56 01 03 00 00 00 00 04 00 00 00 00 00 00 00 00 00 00 00 05 00 00 00 05 03 AA BB CC",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "CONTROL",
+     "flags": [],
+     "event_count": 0,
+     "seq": 4,
+     "timestamp_us": 0,
+     "payload_length": 5
+    },
+    "control": {
+     "subtype": "STOP",
+     "reason": "server_shutdown",
+     "trailing_offset": 26
+    }
+   },
+   "encode": false
+  },
+  {
+   "id": "TV35",
+   "name": "ERROR message 한글 100자(300B)를 인코드하면 85자(255B)로 잘림",
+   "direction": "both",
+   "hex": "41 56 01 03 00 00 00 00 03 00 00 00 F4 01 00 00 00 00 00 00 05 01 00 00 06 0F 00 01 FF 01 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80 EA B0 80",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "CONTROL",
+     "flags": [],
+     "event_count": 0,
+     "seq": 3,
+     "timestamp_us": 500,
+     "payload_length": 261
+    },
+    "control": {
+     "subtype": "ERROR",
+     "code": "E_STATE",
+     "fatal": true,
+     "message": "가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가"
+    }
+   },
+   "encode_input": {
+    "header": {
+     "version": 1,
+     "msg_type": "CONTROL",
+     "flags": [],
+     "event_count": 0,
+     "seq": 3,
+     "timestamp_us": 500,
+     "payload_length": 261
+    },
+    "control": {
+     "subtype": "ERROR",
+     "code": "E_STATE",
+     "fatal": true,
+     "message": "가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가가"
+    }
+   }
+  }
+ ]
+}

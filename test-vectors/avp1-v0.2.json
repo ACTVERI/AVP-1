@@ -1,0 +1,955 @@
+{
+ "format": "avp1-test-vectors",
+ "version": "0.2",
+ "source": "docs/avp1-protocol.md 골든 테스트 벡터 절",
+ "compare": {
+  "f32_fields": [
+   "ai_score",
+   "value",
+   "scale",
+   "offset",
+   "values",
+   "data"
+  ],
+  "note": "f32 필드는 양쪽을 f32로 반올림한 뒤 비교. 디코드 결과의 x, y(이동 누적), applied_at_us, values 는 디코더가 계산하고 인코더는 무시함. encode_input 이 있으면 인코더는 expected 대신 그것을 씀"
+ },
+ "dict": {
+  "targets": [
+   "",
+   "search_box",
+   "result_list",
+   "cart_button"
+  ],
+  "routes": [
+   "",
+   "/shop",
+   "/shop/cart"
+  ]
+ },
+ "vectors": [
+  {
+   "id": "TV1",
+   "name": "HELLO(자체 미션, CAPTCHA 켬, 변화 지원)",
+   "direction": "client_to_server",
+   "hex": "41 56 01 03 00 00 00 00 00 00 00 00 FC 08 00 00 00 00 00 00 49 00 00 00 01 02 00 01 02 05 0B 73 74 6C 61 62 2F 30 2E 32 2E 30 0D 70 6B 5F 73 74 6C 61 62 5F 64 65 6D 6F 12 6D 69 73 73 69 6F 6E 5F 63 6F 6D 70 61 72 65 5F 76 31 00 E4 30 7B CD 5F 06 00 A0 08 D4 07 E8 07 05 00 01 8E 01 00 0C 64",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "CONTROL",
+     "flags": [],
+     "event_count": 0,
+     "seq": 0,
+     "timestamp_us": 2300,
+     "payload_length": 73
+    },
+    "control": {
+     "subtype": "HELLO",
+     "proto_minor": 2,
+     "caps": 0,
+     "client_kind": "electron_lab",
+     "mission_kind": "custom_mission",
+     "run_flags": 5,
+     "sdk_version": "stlab/0.2.0",
+     "client_key": "pk_stlab_demo",
+     "mission_id": "mission_compare_v1",
+     "t0_unix_us": 1794186000000000,
+     "viewport_width": 1056,
+     "viewport_height": 980,
+     "dpr_milli": 1000,
+     "input_caps": 5,
+     "max_touch_points": 0,
+     "browser_family": 1,
+     "browser_major": 142,
+     "sampling_policy": 0,
+     "env_flags": 12,
+     "timer_resolution_us": 100
+    }
+   }
+  },
+  {
+   "id": "TV2",
+   "name": "WELCOME(사전 2종)",
+   "direction": "server_to_client",
+   "hex": "41 56 01 03 00 00 00 00 01 00 00 00 B0 04 00 00 00 00 00 00 66 00 00 00 02 01 9A 6A 3C 5E 10 7C 4B 8F 21 3D 9E 0B 7A 4C 12 28 84 31 7B CD 5F 06 00 00 0F 32 98 75 E8 07 90 4E 03 A0 06 90 4E 80 80 04 80 08 40 02 01 03 0A 73 65 61 72 63 68 5F 62 6F 78 0B 72 65 73 75 6C 74 5F 6C 69 73 74 0B 63 61 72 74 5F 62 75 74 74 6F 6E 02 02 05 2F 73 68 6F 70 0A 2F 73 68 6F 70 2F 63 61 72 74",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "CONTROL",
+     "flags": [],
+     "event_count": 0,
+     "seq": 1,
+     "timestamp_us": 1200,
+     "payload_length": 102
+    },
+    "control": {
+     "subtype": "WELCOME",
+     "session_id": "019a6a3c5e107c4b8f213d9e0b7a4c12",
+     "server_open_unix_us": 1794186000041000,
+     "caps": 0,
+     "server_flags": 15,
+     "flush_ms": 50,
+     "keepalive_ms": 15000,
+     "infer_interval_ms": 1000,
+     "window_ms": 10000,
+     "min_action_events": 3,
+     "captcha_threshold_milli": 800,
+     "captcha_sustain_ms": 10000,
+     "max_payload_bytes": 65536,
+     "max_events_per_frame": 1024,
+     "max_unacked_frames": 64,
+     "dict": {
+      "targets": [
+       "",
+       "search_box",
+       "result_list",
+       "cart_button"
+      ],
+      "routes": [
+       "",
+       "/shop",
+       "/shop/cart"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "TV3",
+   "name": "포인터: CHECKPOINT, 이동 2개, TARGET_INFO, 누름, 뗌",
+   "direction": "client_to_server",
+   "hex": "41 56 01 01 0C 00 06 00 01 00 00 00 40 42 0F 00 00 00 00 00 3F 00 00 00 50 09 00 01 07 80 0A D0 05 00 00 01 05 D8 81 01 06 03 01 05 BC 82 01 0A 01 30 0C EC CE 0C 01 01 03 B0 09 A8 05 78 28 02 09 00 90 0A CA 05 00 00 01 01 03 0B E8 B4 0A 90 0A CC 05 00 00 01 01",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "DATA",
+     "flags": [
+      "HAS_CHECKPOINT",
+      "ACK_REQUESTED"
+     ],
+     "event_count": 6,
+     "seq": 1,
+     "timestamp_us": 1000000,
+     "payload_length": 63
+    },
+    "events": [
+     {
+      "t_us": 1000000,
+      "event_seq": 1,
+      "event_type": "CHECKPOINT",
+      "pointer_known": true,
+      "doc_visible": true,
+      "window_focused": true,
+      "pointer_type": "mouse",
+      "x": 640,
+      "y": 360,
+      "scroll_y": 0,
+      "anchor": 0
+     },
+     {
+      "t_us": 1008300,
+      "event_seq": 2,
+      "event_type": "POINTER_MOVE",
+      "dx": 3,
+      "dy": -2,
+      "x": 643,
+      "y": 358
+     },
+     {
+      "t_us": 1016650,
+      "event_seq": 3,
+      "event_type": "POINTER_MOVE",
+      "dx": 5,
+      "dy": -1,
+      "x": 648,
+      "y": 357
+     },
+     {
+      "t_us": 1120000,
+      "event_seq": 4,
+      "event_type": "TARGET_INFO",
+      "target": 1,
+      "target_role": "button",
+      "av_key": "cart_button",
+      "target_bbox": [
+       600,
+       340,
+       120,
+       40
+      ]
+     },
+     {
+      "t_us": 1120000,
+      "event_seq": 5,
+      "event_type": "POINTER_DOWN",
+      "x": 648,
+      "y": 357,
+      "button": 0,
+      "pointer_type": "mouse",
+      "trusted": true,
+      "target": 1
+     },
+     {
+      "t_us": 1205300,
+      "event_seq": 6,
+      "event_type": "POINTER_UP",
+      "x": 648,
+      "y": 358,
+      "button": 0,
+      "pointer_type": "mouse",
+      "trusted": true,
+      "target": 1
+     }
+    ]
+   }
+  },
+  {
+   "id": "TV4",
+   "name": "키 2개, 휠, 페이지 이동 시작과 끝",
+   "direction": "client_to_server",
+   "hex": "41 56 01 01 0C 00 07 00 02 00 00 00 80 84 1E 00 00 00 00 00 44 00 00 00 50 09 00 07 07 90 0A CC 05 00 00 30 0C E0 A7 12 02 03 01 50 A0 01 90 03 24 10 05 00 01 01 00 02 11 07 98 D4 0B 01 01 00 02 20 09 88 A3 2B 00 A0 9C 01 00 00 40 06 A0 C2 1E 02 03 04 41 06 A0 8D 06 02 03 04",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "DATA",
+     "flags": [
+      "HAS_CHECKPOINT",
+      "ACK_REQUESTED"
+     ],
+     "event_count": 7,
+     "seq": 2,
+     "timestamp_us": 2000000,
+     "payload_length": 68
+    },
+    "events": [
+     {
+      "t_us": 2000000,
+      "event_seq": 7,
+      "event_type": "CHECKPOINT",
+      "pointer_known": true,
+      "doc_visible": true,
+      "window_focused": true,
+      "pointer_type": "mouse",
+      "x": 648,
+      "y": 358,
+      "scroll_y": 0,
+      "anchor": 0
+     },
+     {
+      "t_us": 2150000,
+      "event_seq": 8,
+      "event_type": "TARGET_INFO",
+      "target": 2,
+      "target_role": "text_input",
+      "av_key": "search_box",
+      "target_bbox": [
+       40,
+       80,
+       400,
+       36
+      ]
+     },
+     {
+      "t_us": 2150000,
+      "event_seq": 9,
+      "event_type": "KEY_DOWN",
+      "key_category": "letter",
+      "trusted": true,
+      "repeat": false,
+      "is_composing": false,
+      "modifier_flags": [],
+      "target": 2
+     },
+     {
+      "t_us": 2245500,
+      "event_seq": 10,
+      "event_type": "KEY_UP",
+      "key_category": "letter",
+      "trusted": true,
+      "repeat": false,
+      "is_composing": false,
+      "modifier_flags": [],
+      "target": 2
+     },
+     {
+      "t_us": 2600000,
+      "event_seq": 11,
+      "event_type": "WHEEL",
+      "wheel_dx": 0,
+      "wheel_dy": 100,
+      "wheel_delta_mode": "pixel",
+      "target": null
+     },
+     {
+      "t_us": 2850000,
+      "event_seq": 12,
+      "event_type": "NAVIGATION_START",
+      "source": "site",
+      "nav_type": "push",
+      "route": "/shop/cart"
+     },
+     {
+      "t_us": 2900000,
+      "event_seq": 13,
+      "event_type": "NAVIGATION_END",
+      "source": "site",
+      "nav_type": "push",
+      "route": "/shop/cart"
+     }
+    ]
+   }
+  },
+  {
+   "id": "TV5",
+   "name": "화면 변화 그려짐(앵커 1)과 뒤따른 누름",
+   "direction": "client_to_server",
+   "hex": "41 56 01 01 0C 00 03 00 05 00 00 00 40 4B 4C 00 00 00 00 00 23 00 00 00 50 0A 00 28 07 F8 0A C8 06 B0 09 00 60 08 F8 84 02 01 BC 82 01 64 02 0B A8 DC 65 FC 0A C4 06 00 00 01 01",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "DATA",
+     "flags": [
+      "HAS_CHECKPOINT",
+      "ACK_REQUESTED"
+     ],
+     "event_count": 3,
+     "seq": 5,
+     "timestamp_us": 5000000,
+     "payload_length": 35
+    },
+    "events": [
+     {
+      "t_us": 5000000,
+      "event_seq": 40,
+      "event_type": "CHECKPOINT",
+      "pointer_known": true,
+      "doc_visible": true,
+      "window_focused": true,
+      "pointer_type": "mouse",
+      "x": 700,
+      "y": 420,
+      "scroll_y": 1200,
+      "anchor": 0
+     },
+     {
+      "t_us": 5016700,
+      "event_seq": 41,
+      "event_type": "UI_CHANGE_RENDERED",
+      "anchor": 1,
+      "apply_lag_us": 16700,
+      "applied_at_us": 5000000,
+      "visible_pct": 100
+     },
+     {
+      "t_us": 5850000,
+      "event_seq": 42,
+      "event_type": "POINTER_DOWN",
+      "x": 702,
+      "y": 418,
+      "button": 0,
+      "pointer_type": "mouse",
+      "trusted": true,
+      "target": 1
+     }
+    ]
+   }
+  },
+  {
+   "id": "TV6",
+   "name": "모르는 이벤트 `0x6E` 건너뛰기",
+   "direction": "client_to_server",
+   "hex": "41 56 01 01 0C 00 03 00 06 00 00 00 80 8D 5B 00 00 00 00 00 1E 00 00 00 50 0A 00 2B 07 FC 0A C4 06 B0 09 01 6E 04 D0 0F AA BB 03 0A 90 4E FC 0A C4 06 00 00 01 01",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "DATA",
+     "flags": [
+      "HAS_CHECKPOINT",
+      "ACK_REQUESTED"
+     ],
+     "event_count": 3,
+     "seq": 6,
+     "timestamp_us": 6000000,
+     "payload_length": 30
+    },
+    "events": [
+     {
+      "t_us": 6000000,
+      "event_seq": 43,
+      "event_type": "CHECKPOINT",
+      "pointer_known": true,
+      "doc_visible": true,
+      "window_focused": true,
+      "pointer_type": "mouse",
+      "x": 702,
+      "y": 418,
+      "scroll_y": 1200,
+      "anchor": 1
+     },
+     {
+      "t_us": 6001000,
+      "event_seq": 44,
+      "event_type": "UNKNOWN",
+      "type_code": 110,
+      "length": 4
+     },
+     {
+      "t_us": 6006000,
+      "event_seq": 45,
+      "event_type": "POINTER_UP",
+      "x": 702,
+      "y": 418,
+      "button": 0,
+      "pointer_type": "mouse",
+      "trusted": true,
+      "target": 1
+     }
+    ]
+   },
+   "encode_input": {
+    "header": {
+     "version": 1,
+     "msg_type": "DATA",
+     "flags": [
+      "HAS_CHECKPOINT",
+      "ACK_REQUESTED"
+     ],
+     "event_count": 3,
+     "seq": 6,
+     "timestamp_us": 6000000,
+     "payload_length": 30
+    },
+    "events": [
+     {
+      "t_us": 6000000,
+      "event_seq": 43,
+      "event_type": "CHECKPOINT",
+      "pointer_known": true,
+      "doc_visible": true,
+      "window_focused": true,
+      "pointer_type": "mouse",
+      "x": 702,
+      "y": 418,
+      "scroll_y": 1200,
+      "anchor": 1
+     },
+     {
+      "t_us": 6001000,
+      "event_seq": 44,
+      "event_type": "UNKNOWN",
+      "type_code": 110,
+      "raw": "D00FAABB"
+     },
+     {
+      "t_us": 6006000,
+      "event_seq": 45,
+      "event_type": "POINTER_UP",
+      "x": 702,
+      "y": 418,
+      "button": 0,
+      "pointer_type": "mouse",
+      "trusted": true,
+      "target": 1
+     }
+    ]
+   }
+  },
+  {
+   "id": "TV7",
+   "name": "서버 ACK(TV5의 CRC32와 디코드 수)",
+   "direction": "server_to_client",
+   "hex": "41 56 01 02 00 00 00 00 05 00 00 00 40 9E 53 00 00 00 00 00 05 00 00 00 0E AF 5F 27 03",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "ACK",
+     "flags": [],
+     "event_count": 0,
+     "seq": 5,
+     "timestamp_us": 5480000,
+     "payload_length": 5
+    },
+    "ack": {
+     "frame_crc32": "275FAF0E",
+     "decoded_events": 3
+    }
+   }
+  },
+  {
+   "id": "TV8",
+   "name": "CHANGE_ORDER(가격 갱신)",
+   "direction": "server_to_client",
+   "hex": "41 56 01 03 00 00 00 00 03 00 00 00 40 16 40 00 00 00 00 00 23 00 00 00 03 01 02 02 C0 3E 02 1B 7B 22 69 74 65 6D 22 3A 22 70 32 22 2C 22 70 72 69 63 65 22 3A 33 31 39 30 30 7D",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "CONTROL",
+     "flags": [],
+     "event_count": 0,
+     "seq": 3,
+     "timestamp_us": 4200000,
+     "payload_length": 35
+    },
+    "control": {
+     "subtype": "CHANGE_ORDER",
+     "anchor": 1,
+     "kind": "price_update",
+     "target_av": "result_list",
+     "deadline_ms": 8000,
+     "require_route": "/shop",
+     "params": {
+      "item": "p2",
+      "price": 31900
+     }
+    }
+   }
+  },
+  {
+   "id": "TV9",
+   "name": "INFERENCE_RESULT 주기 결과(`ai_score` 0.87, 윈도우 #3, 38B)",
+   "direction": "server_to_client",
+   "hex": "41 56 01 04 00 00 00 00 05 00 00 00 14 16 5D 00 00 00 00 00 0E 00 00 00 03 00 00 00 00 F6 2E 2D 52 B8 5E 3F 01 2D",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "INFERENCE_RESULT",
+     "flags": [],
+     "event_count": 0,
+     "seq": 5,
+     "timestamp_us": 6100500,
+     "payload_length": 14
+    },
+    "result": {
+     "window_id": 3,
+     "window_start_ms": 0,
+     "window_end_ms": 6006,
+     "event_count": 45,
+     "ai_score": 0.87,
+     "ai_score_bits": "3F5EB852",
+     "first_event_seq": 1,
+     "last_event_seq": 45
+    }
+   }
+  },
+  {
+   "id": "TV10",
+   "name": "INFERENCE_RESULT 마지막 결과(`FINAL` 플래그, 세션 전체, `ai_score` 0.91)",
+   "direction": "server_to_client",
+   "hex": "41 56 01 04 02 00 00 00 09 00 00 00 10 B7 5F 01 00 00 00 00 0E 00 00 00 19 00 00 00 00 F6 2E 2D C3 F5 68 3F 01 2D",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "INFERENCE_RESULT",
+     "flags": [
+      "FINAL"
+     ],
+     "event_count": 0,
+     "seq": 9,
+     "timestamp_us": 23050000,
+     "payload_length": 14
+    },
+    "result": {
+     "window_id": 25,
+     "window_start_ms": 0,
+     "window_end_ms": 6006,
+     "event_count": 45,
+     "ai_score": 0.91,
+     "ai_score_bits": "3F68F5C3",
+     "first_event_seq": 1,
+     "last_event_seq": 45
+    }
+   }
+  },
+  {
+   "id": "TV11",
+   "name": "CONTROL CAPTCHA_CHALLENGE",
+   "direction": "server_to_client",
+   "hex": "41 56 01 03 00 00 00 00 06 00 00 00 30 B9 42 01 00 00 00 00 85 00 00 00 0A 07 63 68 5F 37 66 33 61 01 11 00 00 00 02 E0 D4 03 01 08 70 7B 22 6B 69 6E 64 22 3A 22 64 72 61 67 5F 6F 72 64 65 72 22 2C 22 70 72 6F 6D 70 74 5F 63 6F 64 65 22 3A 22 6F 72 64 65 72 5F 62 79 5F 73 69 7A 65 22 2C 22 61 73 73 65 74 73 22 3A 5B 7B 22 69 6E 64 65 78 22 3A 30 2C 22 6E 61 6D 65 22 3A 22 74 69 6C 65 73 2E 70 6E 67 22 2C 22 74 79 70 65 22 3A 22 69 6D 61 67 65 2F 70 6E 67 22 7D 5D 7D",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "CONTROL",
+     "flags": [],
+     "event_count": 0,
+     "seq": 6,
+     "timestamp_us": 21150000,
+     "payload_length": 133
+    },
+    "control": {
+     "subtype": "CAPTCHA_CHALLENGE",
+     "challenge_id": "ch_7f3a",
+     "challenge_no": 1,
+     "window_id": 17,
+     "reason": "sustained_above_threshold",
+     "ttl_ms": 60000,
+     "asset_count": 1,
+     "asset_total_bytes": 8,
+     "meta": {
+      "kind": "drag_order",
+      "prompt_code": "order_by_size",
+      "assets": [
+       {
+        "index": 0,
+        "name": "tiles.png",
+        "type": "image/png"
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "TV12",
+   "name": "ASSET_CHUNK(에셋 8바이트, 조각 1개)",
+   "direction": "server_to_client",
+   "hex": "41 56 01 07 00 00 00 00 07 00 00 00 C0 BA 42 01 00 00 00 00 39 00 00 00 07 63 68 5F 37 66 33 61 00 00 00 01 00 08 00 00 00 4C 4B 6A 3B E1 31 4A B8 61 38 BE F4 31 4D DE 02 2E 60 09 60 D8 68 9A 2C 8F 86 31 80 2D 20 DA B6 89 50 4E 47 0D 0A 1A 0A",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "ASSET_CHUNK",
+     "flags": [],
+     "event_count": 0,
+     "seq": 7,
+     "timestamp_us": 21150400,
+     "payload_length": 57
+    },
+    "asset_chunk": {
+     "challenge_id": "ch_7f3a",
+     "asset_index": 0,
+     "chunk_index": 0,
+     "chunk_count": 1,
+     "asset_size": 8,
+     "asset_sha256": "4c4b6a3be1314ab86138bef4314dde022e600960d8689a2c8f8631802d20dab6",
+     "data_hex": "89504E470D0A1A0A"
+    }
+   }
+  },
+  {
+   "id": "TV13",
+   "name": "CONTROL CAPTCHA_ANSWER",
+   "direction": "client_to_server",
+   "hex": "41 56 01 03 00 00 00 00 07 00 00 00 20 38 51 01 00 00 00 00 22 00 00 00 08 07 63 68 5F 37 66 33 61 00 17 7B 22 6F 72 64 65 72 22 3A 5B 22 62 22 2C 22 61 22 2C 22 63 22 5D 7D",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "CONTROL",
+     "flags": [],
+     "event_count": 0,
+     "seq": 7,
+     "timestamp_us": 22100000,
+     "payload_length": 34
+    },
+    "control": {
+     "subtype": "CAPTCHA_ANSWER",
+     "challenge_id": "ch_7f3a",
+     "status": "answered",
+     "answer": {
+      "order": [
+       "b",
+       "a",
+       "c"
+      ]
+     }
+    }
+   }
+  },
+  {
+   "id": "TV14",
+   "name": "CONTROL CAPTCHA_RESULT",
+   "direction": "server_to_client",
+   "hex": "41 56 01 03 00 00 00 00 08 00 00 00 C0 BE 52 01 00 00 00 00 0B 00 00 00 0B 07 63 68 5F 37 66 33 61 01 04",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "CONTROL",
+     "flags": [],
+     "event_count": 0,
+     "seq": 8,
+     "timestamp_us": 22200000,
+     "payload_length": 11
+    },
+    "control": {
+     "subtype": "CAPTCHA_RESULT",
+     "challenge_id": "ch_7f3a",
+     "result": "pass",
+     "next_state": "CAPTCHA_PASSED"
+    }
+   }
+  },
+  {
+   "id": "TV15",
+   "name": "MODEL_INPUT 2×3",
+   "direction": "server_to_client",
+   "hex": "41 56 01 05 00 00 00 00 04 00 00 00 20 14 5D 00 00 00 00 00 2A 00 00 00 03 00 00 00 01 00 00 00 2D 00 00 00 01 00 02 00 03 00 00 00 00 00 00 00 08 41 00 00 00 C0 00 00 80 3F 00 00 86 41 00 00 A0 40",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "MODEL_INPUT",
+     "flags": [],
+     "event_count": 0,
+     "seq": 4,
+     "timestamp_us": 6100000,
+     "payload_length": 42
+    },
+    "model_input": {
+     "window_id": 3,
+     "first_event_seq": 1,
+     "last_event_seq": 45,
+     "dtype": "f32",
+     "downsampled": false,
+     "rows": 2,
+     "cols": 3,
+     "data": [
+      [
+       0.0,
+       8.5,
+       -2.0
+      ],
+      [
+       1.0,
+       16.75,
+       5.0
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "id": "TV16",
+   "name": "FINISH",
+   "direction": "client_to_server",
+   "hex": "41 56 01 03 00 00 00 00 08 00 00 00 C0 F3 5E 01 00 00 00 00 05 00 00 00 04 01 06 2D 00",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "CONTROL",
+     "flags": [],
+     "event_count": 0,
+     "seq": 8,
+     "timestamp_us": 23000000,
+     "payload_length": 5
+    },
+    "control": {
+     "subtype": "FINISH",
+     "reason": "submit",
+     "last_data_seq": 6,
+     "event_count": 45,
+     "collection_loss_count": 0
+    }
+   }
+  },
+  {
+   "id": "TV17",
+   "name": "5번째 varint 바이트 `0x1F`",
+   "direction": "both_decoders",
+   "hex": "41 56 01 01 04 00 01 00 08 00 00 00 80 96 98 00 00 00 00 00 0D 00 00 00 50 0B 00 FF FF FF FF 1F 07 00 00 00 00",
+   "error": "E_VARINT_TOO_LONG"
+  },
+  {
+   "id": "TV18",
+   "name": "Message Type `0x08`",
+   "direction": "both_decoders",
+   "hex": "41 56 01 08 00 00 00 00 09 00 00 00 80 96 98 00 00 00 00 00 00 00 00 00",
+   "error": "E_MSG_TYPE"
+  },
+  {
+   "id": "TV19",
+   "name": "INFERENCE_RESULT 확장 블록(스키마, 추론 시간, 모양, 특징 2개, 시계열 2채널)",
+   "direction": "server_to_client",
+   "hex": "41 56 01 04 00 00 00 00 0A 00 00 00 54 58 6C 00 00 00 00 00 4F 00 00 00 04 00 00 00 00 E2 36 34 00 00 60 3F 01 34 05 01 01 01 02 02 E0 5D 03 03 80 01 04 04 0B 02 01 00 00 40 3F 03 00 00 00 3E 05 25 02 04 00 01 00 00 00 3F 00 00 00 00 00 00 02 00 04 00 06 00 03 00 00 80 3F 00 00 00 00 08 00 10 00 09 00 11 00",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "INFERENCE_RESULT",
+     "flags": [],
+     "event_count": 0,
+     "seq": 10,
+     "timestamp_us": 7100500,
+     "payload_length": 79
+    },
+    "result": {
+     "window_id": 4,
+     "window_start_ms": 0,
+     "window_end_ms": 7010,
+     "event_count": 52,
+     "ai_score": 0.875,
+     "ai_score_bits": "3F600000",
+     "first_event_seq": 1,
+     "last_event_seq": 52,
+     "ext": {
+      "schema_id": 1,
+      "inference_time_us": 12000,
+      "shape": {
+       "steps": 128,
+       "features": 4
+      },
+      "features": [
+       {
+        "id": 1,
+        "value": 0.75
+       },
+       {
+        "id": 3,
+        "value": 0.125
+       }
+      ],
+      "series": {
+       "points": 4,
+       "channels": [
+        {
+         "id": 1,
+         "scale": 0.5,
+         "offset": 0.0,
+         "q": [
+          0,
+          2,
+          4,
+          6
+         ],
+         "values": [
+          0.0,
+          1.0,
+          2.0,
+          3.0
+         ]
+        },
+        {
+         "id": 3,
+         "scale": 1.0,
+         "offset": 0.0,
+         "q": [
+          8,
+          16,
+          9,
+          17
+         ],
+         "values": [
+          8.0,
+          16.0,
+          9.0,
+          17.0
+         ]
+        }
+       ]
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "TV20",
+   "name": "FEATURE_SCHEMA",
+   "direction": "server_to_client",
+   "hex": "41 56 01 03 00 00 00 00 02 00 00 00 14 05 00 00 00 00 00 00 67 00 00 00 07 01 07 73 74 75 62 2D 72 66 05 30 2E 30 2E 31 80 01 04 0A 6D 65 61 6E 5F 73 70 65 65 64 0A 6D 65 61 6E 5F 61 63 63 65 6C 0B 70 61 75 73 65 5F 72 61 74 69 6F 13 63 6C 69 63 6B 5F 69 6E 74 65 72 76 61 6C 5F 6D 65 61 6E 04 01 76 05 70 78 2F 6D 73 01 61 06 70 78 2F 6D 73 32 02 64 74 02 6D 73 02 64 79 02 70 78",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "CONTROL",
+     "flags": [],
+     "event_count": 0,
+     "seq": 2,
+     "timestamp_us": 1300,
+     "payload_length": 103
+    },
+    "control": {
+     "subtype": "FEATURE_SCHEMA",
+     "schema_id": 1,
+     "model_id": "stub-rf",
+     "model_version": "0.0.1",
+     "window_steps": 128,
+     "features": [
+      "mean_speed",
+      "mean_accel",
+      "pause_ratio",
+      "click_interval_mean"
+     ],
+     "channels": [
+      {
+       "name": "v",
+       "unit": "px/ms"
+      },
+      {
+       "name": "a",
+       "unit": "px/ms2"
+      },
+      {
+       "name": "dt",
+       "unit": "ms"
+      },
+      {
+       "name": "dy",
+       "unit": "px"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "TV21",
+   "name": "RUN_LABEL",
+   "direction": "client_to_server",
+   "hex": "41 56 01 03 00 00 00 00 01 00 00 00 60 09 00 00 00 00 00 00 04 00 00 00 0C 02 02 00",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "CONTROL",
+     "flags": [],
+     "event_count": 0,
+     "seq": 1,
+     "timestamp_us": 2400,
+     "payload_length": 4
+    },
+    "control": {
+     "subtype": "RUN_LABEL",
+     "label": "ai_agent",
+     "input_path": "cdp_input",
+     "set_at_ms": 0
+    }
+   }
+  },
+  {
+   "id": "TV22",
+   "name": "키 없는 INPUT(CHECKPOINT, INPUT)",
+   "direction": "client_to_server",
+   "hex": "41 56 01 01 0C 00 02 00 03 00 00 00 70 03 2D 00 00 00 00 00 15 00 00 00 50 09 00 0E 07 90 0A CC 05 00 00 14 08 A0 9C 01 00 02 01 0C 01",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "DATA",
+     "flags": [
+      "HAS_CHECKPOINT",
+      "ACK_REQUESTED"
+     ],
+     "event_count": 2,
+     "seq": 3,
+     "timestamp_us": 2950000,
+     "payload_length": 21
+    },
+    "events": [
+     {
+      "t_us": 2950000,
+      "event_seq": 14,
+      "event_type": "CHECKPOINT",
+      "pointer_known": true,
+      "doc_visible": true,
+      "window_focused": true,
+      "pointer_type": "mouse",
+      "x": 648,
+      "y": 358,
+      "scroll_y": 0,
+      "anchor": 0
+     },
+     {
+      "t_us": 2960000,
+      "event_seq": 15,
+      "event_type": "INPUT",
+      "source": "dom",
+      "target": 2,
+      "input_type": "insertText",
+      "text_length_delta": 6,
+      "trusted": true
+     }
+    ]
+   }
+  }
+ ]
+}

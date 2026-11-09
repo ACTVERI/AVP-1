@@ -1,0 +1,618 @@
+{
+  "format": "avp1-fuzz-findings",
+  "version": "0.3",
+  "source": "tools/fuzz/fuzz.py 차등 퍼징(TS ts/src/codec.ts 와 Python py/avp1/codec.py)에서 찾은 불일치와 버그. hex 는 줄인 재현. check 가 있는 항목은 두 코덱 시험(ts/test/vectors.test.ts, py/tests/test_vectors.py)이 읽고, signatures 는 퍼저가 실패로 세지 않는 묶음",
+  "statuses": {
+    "고침": "코덱 버그였고 고침",
+    "규격 결정 필요": "명세가 정하지 않아 고치지 않음(v0.3.1 에서 남은 것 없음)",
+    "규격이 허용": "명세가 정한 동작이라 고치지 않음"
+  },
+  "run_after_fix": {
+    "seed": 20261109,
+    "total": 22000,
+    "categories": {
+      "mutate": {
+        "cases": 8800,
+        "both_error": 6918,
+        "both_ok": 1882,
+        "rt_noncanonical": 708,
+        "rt_skip_unknown": 26,
+        "mismatch_reencode": 3,
+        "rt_encode_error": 1,
+        "mismatch_decode": 1,
+        "unsafe_number": 1
+      },
+      "random": {
+        "cases": 3960,
+        "both_error": 3960
+      },
+      "header_ok": {
+        "cases": 6160,
+        "both_error": 4714,
+        "both_ok": 1446,
+        "rt_noncanonical": 2540
+      },
+      "boundary": {
+        "cases": 3080,
+        "both_ok": 1714,
+        "both_error": 1366,
+        "rt_noncanonical": 728,
+        "unsafe_number": 93,
+        "rt_encode_error": 32,
+        "mismatch_reencode": 116,
+        "mismatch_decode": 55,
+        "rt_skip_unknown": 174
+      }
+    }
+  },
+  "dict": {
+    "targets": [
+      "",
+      "search_box",
+      "result_list",
+      "cart_button"
+    ],
+    "routes": [
+      "",
+      "/shop",
+      "/shop/cart"
+    ]
+  },
+  "findings": [
+    {
+      "id": "F1",
+      "title": "str 맨 앞 U+FEFF(BOM)를 TS 디코더가 지움",
+      "status": "고침",
+      "found_by": "mutate(문자열 조각 넣기)",
+      "hex": "41 56 01 07 00 00 00 00 07 00 00 00 C0 BA 42 01 00 00 00 00 34 00 00 00 0A EF BB BF 63 68 5F 37 66 33 61 00 00 4B 6A 3B E1 31 4A B8 61 38 BE F4 31 4D DE 02 2E 60 09 60 D8 68 9A 2C 8F 86 31 80 2D 20 DA B6 89 50 4E 47 0D 0A 1A 0A",
+      "before": {
+        "py": "challenge_id \"\\ufeffch_7f3a\", 다시 인코드하면 같은 hex",
+        "ts": "challenge_id \"ch_7f3a\"(BOM 빠짐), 다시 인코드하면 3바이트 짧음"
+      },
+      "spec": [
+        "기본 인코딩 표: `str` | `uvar` 바이트 길이 + UTF-8 바이트. NUL 금지"
+      ],
+      "judgement": "Python 이 맞음. str 값은 UTF-8 바이트를 그대로 푼 글자열이고 U+FEFF 도 글자다. TS 는 TextDecoder 기본값(ignoreBOM: false)이 맨 앞 BOM 을 지워 값이 바뀌었다. HELLO mission_id, ASSET_CHUNK challenge_id 등 모든 str 필드가 같은 원인",
+      "check": {
+        "field": "asset_chunk.challenge_id",
+        "value": "﻿ch_7f3a",
+        "reencode": "same_hex"
+      },
+      "observed_after_fix": {
+        "py": {
+          "decode": "ok",
+          "reencode": "same_hex"
+        },
+        "ts": {
+          "decode": "ok",
+          "reencode": "same_hex"
+        }
+      }
+    },
+    {
+      "id": "F2",
+      "title": "json 필드 맨 앞 BOM 을 TS 는 받고 Python 은 E_CONTROL_BODY",
+      "status": "고침",
+      "found_by": "mutate(문자열 조각 넣기)",
+      "hex": "41 56 01 03 00 00 00 00 03 00 00 00 40 16 40 00 00 00 00 00 25 00 00 00 03 01 02 02 3E 02 1E EF BB BF 7B 22 69 74 65 6D 22 3A 22 70 32 22 2C 22 70 72 69 63 65 22 3A 33 31 39 30 30 7D",
+      "before": {
+        "py": "E_CONTROL_BODY",
+        "ts": "성공(params {item, price}), 다시 인코드하면 BOM 이 빠짐"
+      },
+      "spec": [
+        "기본 인코딩 표: `json` | `str` 과 같은 바이트이고 내용은 공백 없는 JSON 객체(Python `separators=(',',':')`, `ensure_ascii=False`). 최상위가 객체가 아니면 `E_CONTROL_BODY`.",
+        "오류 코드 표: 12 `E_CONTROL_BODY` | `json` 이 UTF-8 JSON 객체가 아님, `str` UTF-8 오류"
+      ],
+      "judgement": "Python 이 맞음. json 은 str 과 같은 바이트이므로 푼 글자열이 \\ufeff{...} 이고 이것은 JSON 객체가 아니다. F1 과 같은 원인(TS 가 BOM 을 지운 뒤 파싱)이라 같은 수정으로 E_CONTROL_BODY 가 됨",
+      "check": {
+        "error": "E_CONTROL_BODY"
+      },
+      "observed_after_fix": {
+        "py": {
+          "decode_error": "E_CONTROL_BODY"
+        },
+        "ts": {
+          "decode_error": "E_CONTROL_BODY"
+        }
+      },
+      "observed_v031": {
+        "py": {
+          "decode_error": "E_CONTROL_BODY"
+        },
+        "ts": {
+          "decode_error": "E_CONTROL_BODY"
+        }
+      }
+    },
+    {
+      "id": "F3",
+      "title": "json 안 1e400 을 다시 인코드할 때 TS 는 null 로 바꿔 쓰고 Python 은 E_ENCODE",
+      "status": "고침",
+      "found_by": "mutate(문자열 조각 넣기), boundary(json 수)",
+      "hex": "41 56 01 03 00 00 00 00 03 00 00 00 40 16 40 00 00 00 00 00 2C 00 00 00 03 01 02 02 3E 02 25 7B 22 7A 22 3A 31 65 34 30 30 2C 22 69 74 65 6D 22 3A 22 70 32 22 2C 22 70 72 69 63 65 22 3A 33 31 39 30 30 7D",
+      "before": {
+        "py": "디코드 z=inf, 다시 인코드 E_ENCODE",
+        "ts": "디코드 z=Infinity, 다시 인코드하면 {\"z\":null,...} 을 말없이 씀(값이 바뀜)"
+      },
+      "spec": [
+        "기본 인코딩: 인코더는 범위를 넘는 값을 받으면 보내지 않고 예외를 냅니다(`E_ENCODE`, 내부 오류이고 선로에 나가지 않음).",
+        "기본 인코딩 표: `json` | `str` 과 같은 바이트이고 내용은 공백 없는 JSON 객체(Python `separators=(',',':')`, `ensure_ascii=False`). 최상위가 객체가 아니면 `E_CONTROL_BODY`."
+      ],
+      "judgement": "Python 이 맞음. JSON 은 무한대를 담을 수 없어 인코더가 받은 값을 그대로 보낼 수 없으므로 E_ENCODE 로 거절해야 한다. TS 는 JSON.stringify 가 Infinity, NaN 을 null 로 바꿔 다른 값을 선로에 냈다. 디코더가 1e400 을 받는 것 자체는 F4 의 규격 결정 사항",
+      "check": {
+        "error": "E_CONTROL_BODY"
+      },
+      "observed_after_fix": {
+        "py": {
+          "decode": "ok",
+          "reencode_error": "E_ENCODE: params 를 JSON 으로 쓸 수 없음: Out of range float values are not JSON compliant: inf"
+        },
+        "ts": {
+          "decode": "ok",
+          "reencode_error": "E_ENCODE: params 에 유한수가 아닌 수: Infinity"
+        }
+      },
+      "decision": "v0.3.1 A4: json 수가 유한하지 않거나 절댓값이 2^53-1 을 넘으면 두 디코더 모두 E_CONTROL_BODY. 1e400 은 디코드 단계에서 거절되어 다시 인코드까지 가지 않음",
+      "observed_v031": {
+        "py": {
+          "decode_error": "E_CONTROL_BODY"
+        },
+        "ts": {
+          "decode_error": "E_CONTROL_BODY"
+        }
+      }
+    },
+    {
+      "id": "F4",
+      "title": "json 수가 double 로 정확히 담기지 않음(2^53 밖 정수, 1e400)",
+      "status": "고침",
+      "found_by": "boundary(json 수), mutate",
+      "hex": "41 56 01 03 00 00 00 00 01 00 00 00 E8 03 00 00 00 00 00 00 1D 00 00 00 03 01 01 00 00 00 16 7B 22 7A 22 3A 39 30 30 37 31 39 39 32 35 34 37 34 30 39 39 33 7D",
+      "before": {
+        "py": "params.z = 9007199254740993(정확한 정수), 다시 인코드하면 같은 hex",
+        "ts": "params.z = 9007199254740992(반올림), 다시 인코드하면 ...992 를 씀"
+      },
+      "spec": [
+        "기본 인코딩 표 `json` 칸: 같은 값을 두 언어가 같은 바이트로 쓰려면 키가 \"9\" 같은 배열 번호 모양이 아니어야 하고(JS 객체는 그런 키를 앞으로 옮김) 수는 정수여야 합니다(`1.0`, `1e-07` 처럼 실수 표기가 다름). 이 조건을 어겨도 디코드 값은 같고, ACK CRC는 보낸 바이트 그대로를 재므로 영향이 없습니다",
+        "오류 코드 표: 12 `E_CONTROL_BODY` | `json` 이 UTF-8 JSON 객체가 아님, `str` UTF-8 오류"
+      ],
+      "judgement": "명세는 json 수가 '정수여야' 같은 바이트가 된다고만 하고, 정수라도 2^53 을 넘으면 TS 가 다른 값을 디코드한다는 점과 1e400 처럼 double 을 넘는 수(두 코덱 모두 무한대로 디코드하고 다시 인코드는 E_ENCODE)를 다루지 않는다. '이 조건을 어겨도 디코드 값은 같고'라는 문장이 큰 정수에서는 틀림. 고르는 안: (가) json 수를 ±(2^53-1) 정수와 유한 실수로 한정하고 밖이면 E_CONTROL_BODY, (나) 지금처럼 받되 값이 다를 수 있다고 명세에 적음",
+      "signatures": [
+        "mismatch_decode|CONTROL.CHANGE_ORDER|$.control.params.z",
+        "unsafe_number|CONTROL.CHANGE_ORDER|$.control.params.z",
+        "mismatch_reencode|CONTROL.CHANGE_ORDER|unsafe_number",
+        "rt_encode_error|py|CONTROL.CHANGE_ORDER|E_ENCODE: params 를 JSON 으로 쓸 수 없음: Out of range float values",
+        "rt_encode_error|ts|CONTROL.CHANGE_ORDER|E_ENCODE: params 에 유한수가 아닌 수: -Infinity",
+        "rt_encode_error|ts|CONTROL.CHANGE_ORDER|E_ENCODE: params 에 유한수가 아닌 수: Infinity"
+      ],
+      "observed_after_fix": {
+        "py": {
+          "decode": "ok",
+          "reencode": "same_hex"
+        },
+        "ts": {
+          "decode": "ok",
+          "reencode": "415601030000000001000000E8030000000000001D000000030101000000167B227A223A393030373139393235343734303939327D"
+        }
+      },
+      "decision": "v0.3.1 A4(안 가): json 수는 유한하고 절댓값 2^53-1 이하만 받고 밖이면 E_CONTROL_BODY. 2^53 을 넘는 수는 모두 정수 값이라 '2^53 넘는 정수'와 같은 규칙",
+      "check": {
+        "error": "E_CONTROL_BODY"
+      },
+      "observed_v031": {
+        "py": {
+          "decode_error": "E_CONTROL_BODY"
+        },
+        "ts": {
+          "decode_error": "E_CONTROL_BODY"
+        }
+      }
+    },
+    {
+      "id": "F5",
+      "title": "헤더 Timestamp 는 2^53-1 이하지만 dt 를 더한 이벤트 시각이 2^53 을 넘음",
+      "status": "고침",
+      "found_by": "boundary(시각 누적)",
+      "hex": "41 56 01 01 04 00 01 00 01 00 00 00 FF FF FF FF FF FF 1F 00 09 00 00 00 50 07 04 00 07 00 14 28 00",
+      "before": {
+        "py": "t_us 9007199254740993",
+        "ts": "t_us 9007199254740992, 다시 인코드하면 dt 를 2가 아닌 1로 써 다른 프레임이 됨"
+      },
+      "spec": [
+        "검사 순서 10. Timestamp가 2^53-1 초과면 `E_HEADER` / 골든 벡터 절: 본문의 `u64`(`t0_unix_us`, `server_open_unix_us`)는 헤더 Timestamp와 같은 이유로 2^53-1 이하여야 하고, 넘으면 `E_RANGE` 입니다.",
+        "이벤트 묶음: 모든 이벤트 payload의 첫 필드는 `dt(svar, µs)` 이고, 프레임의 첫 이벤트는 헤더 Timestamp에서, 나머지는 바로 앞 이벤트 시각에서 잰 차이입니다."
+      ],
+      "judgement": "헤더와 본문 u64 에는 2^53-1 한도가 있지만 dt 를 누적한 이벤트 시각(그리고 UI_CHANGE_RENDERED 의 applied_at_us)에는 한도가 없다. TS 는 2^53 위에서 반올림해 Python 과 다른 값을 낸다. 고르는 안: (가) 누적 시각이 2^53-1 을 넘으면 E_HEADER(또는 E_RANGE), (나) 세션 15분 한도로 실제로는 생기지 않으므로 명세에 '디코더는 검사하지 않음'을 적음",
+      "signatures": [
+        "mismatch_decode|DATA|$.events[].t_us",
+        "unsafe_number|DATA|$.events[].t_us",
+        "mismatch_reencode|DATA|unsafe_number"
+      ],
+      "observed_after_fix": {
+        "py": {
+          "decode": "ok",
+          "reencode": "same_hex"
+        },
+        "ts": {
+          "decode": "ok",
+          "reencode": "415601010400010001000000FFFFFFFFFFFF1F0009000000500702000700142800"
+        }
+      },
+      "decision": "v0.3.1: dt 를 더한 이벤트 시각이 2^53-1 을 넘으면 E_RANGE",
+      "check": {
+        "error": "E_RANGE"
+      },
+      "observed_v031": {
+        "py": {
+          "decode_error": "E_RANGE"
+        },
+        "ts": {
+          "decode_error": "E_RANGE"
+        }
+      }
+    },
+    {
+      "id": "F6",
+      "title": "json 안 짝 없는 서로게이트(\\ud800)를 Python 인코더만 다시 쓰지 못함",
+      "status": "고침",
+      "found_by": "mutate(문자열 조각 넣기)",
+      "hex": "41 56 01 03 00 00 00 00 07 00 00 00 20 38 51 01 00 00 00 00 2F 00 00 00 08 07 63 68 5F 37 66 33 61 00 24 7B 22 7A 22 3A 22 5C 75 64 38 30 30 22 2C 22 6F 72 64 65 72 22 3A 5B 22 62 22 2C 22 61 22 2C 22 63 22 5D 7D",
+      "before": {
+        "py": "디코드 answer.z = '\\ud800', 다시 인코드 E_ENCODE(utf-8 로 쓸 수 없음)",
+        "ts": "디코드 같은 값, 다시 인코드하면 \"\\ud800\" 이스케이프로 원래 hex"
+      },
+      "spec": [
+        "기본 인코딩 표: `json` | `str` 과 같은 바이트이고 내용은 공백 없는 JSON 객체(Python `separators=(',',':')`, `ensure_ascii=False`). 최상위가 객체가 아니면 `E_CONTROL_BODY`.",
+        "기본 인코딩 표: `str` | `uvar` 바이트 길이 + UTF-8 바이트. NUL 금지"
+      ],
+      "judgement": "두 디코더는 같은 값을 낸다. 명세는 ensure_ascii=False 로 UTF-8 을 쓰라고만 해서 UTF-8 로 쓸 수 없는 짝 없는 서로게이트를 이스케이프로 쓸지 거절할지 정하지 않았다. 고르는 안: (가) 디코더가 짝 없는 서로게이트 이스케이프를 E_CONTROL_BODY 로 거절, (나) 인코더가 그 글자만 \\uXXXX 로 씀(TS 와 같게)",
+      "signatures": [
+        "rt_encode_error|py|CONTROL.CAPTCHA_ANSWER|E_ENCODE: answer 를 JSON 으로 쓸 수 없음: 'utf-' codec can't encode"
+      ],
+      "observed_after_fix": {
+        "py": {
+          "decode": "ok",
+          "reencode_error": "E_ENCODE: answer 를 JSON 으로 쓸 수 없음: 'utf-8' codec can't encode character '\\ud800' in position 6: surrogates not allowed"
+        },
+        "ts": {
+          "decode": "ok",
+          "reencode": "same_hex"
+        }
+      },
+      "decision": "v0.3.1(안 가): json 안 짝 없는 서로게이트 이스케이프는 두 디코더 모두 E_CONTROL_BODY",
+      "check": {
+        "error": "E_CONTROL_BODY"
+      },
+      "observed_v031": {
+        "py": {
+          "decode_error": "E_CONTROL_BODY"
+        },
+        "ts": {
+          "decode_error": "E_CONTROL_BODY"
+        }
+      }
+    },
+    {
+      "id": "F7",
+      "title": "json 실수 표기(1E2, 1.0)를 두 인코더가 다르게 다시 씀",
+      "status": "규격이 허용",
+      "found_by": "boundary(json 수), mutate",
+      "hex": "41 56 01 03 00 00 00 00 01 00 00 00 E8 03 00 00 00 00 00 00 10 00 00 00 03 01 01 00 00 00 09 7B 22 7A 22 3A 31 45 32 7D",
+      "before": {
+        "py": "100.0 으로 다시 씀",
+        "ts": "100 으로 다시 씀"
+      },
+      "spec": [
+        "기본 인코딩 표 `json` 칸: 같은 값을 두 언어가 같은 바이트로 쓰려면 키가 \"9\" 같은 배열 번호 모양이 아니어야 하고(JS 객체는 그런 키를 앞으로 옮김) 수는 정수여야 합니다(`1.0`, `1e-07` 처럼 실수 표기가 다름). 이 조건을 어겨도 디코드 값은 같고, ACK CRC는 보낸 바이트 그대로를 재므로 영향이 없습니다"
+      ],
+      "judgement": "디코드 값은 같고(100 == 100.0) 다시 쓴 바이트만 다르다. 명세가 이 차이를 알고 허용한다고 적어 두었으므로 고치지 않음",
+      "signatures": [
+        "mismatch_reencode|CONTROL.CHANGE_ORDER|json_float",
+        "mismatch_reencode|CONTROL.CAPTCHA_ANSWER|json_float"
+      ],
+      "observed_after_fix": {
+        "py": {
+          "decode": "ok",
+          "reencode": "415601030000000001000000E803000000000000120000000301010000000B7B227A223A3130302E307D"
+        },
+        "ts": {
+          "decode": "ok",
+          "reencode": "415601030000000001000000E80300000000000010000000030101000000097B227A223A3130307D"
+        }
+      }
+    },
+    {
+      "id": "F8",
+      "title": "WELCOME 사전 종류가 표 밖(숫자 이름)이거나 겹치면 다시 인코드 순서나 개수가 바뀜",
+      "status": "고침",
+      "found_by": "boundary(사전 종류)",
+      "hex": "41 56 01 03 00 00 00 00 01 00 00 00 E8 03 00 00 00 00 00 00 2E 00 00 00 02 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 00 00 32 75 07 4E 03 06 4E 04 08 40 02 01 01 01 62 09 01 01 6A",
+      "also_hex": "41 56 01 03 00 00 00 00 01 00 00 00 E8 03 00 00 00 00 00 00 36 00 00 00 02 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 00 00 32 98 75 E8 07 90 4E 03 A0 06 90 4E 80 80 04 80 08 40 02 01 01 01 61 01 01 01 62",
+      "before": {
+        "py": "kind 1, 9 순서 그대로 다시 씀. 겹친 kind 는 뒤 것만 남김",
+        "ts": "JS 객체가 숫자 이름 \"9\" 를 앞으로 옮겨 kind 9, 1 순서로 씀. 겹친 kind 는 뒤 것만 남김"
+      },
+      "spec": [
+        "WELCOME 16번: 사전 × `dict_count` | `kind u8`, `n uvar`, `str` × n | kind 1 `targets`, 2 `routes`, 3 `states`, 4 `steps`. 0번은 빈 문자열이고 보내지 않음"
+      ],
+      "judgement": "명세는 kind 1~4 만 적고 모르는 kind 와 같은 kind 가 두 번 오는 경우를 정하지 않았다. 디코드 값은 두 코덱이 같다. 고르는 안: (가) 모르는 kind 와 겹친 kind 는 E_MISSION, (나) 모르는 kind 는 건너뛰고(값에 넣지 않음) 겹치면 처음 것만",
+      "signatures": [
+        "mismatch_reencode|CONTROL.WELCOME|dict_numeric_kind"
+      ],
+      "observed_after_fix": {
+        "py": {
+          "decode": "ok",
+          "reencode": "same_hex"
+        },
+        "ts": {
+          "decode": "ok",
+          "reencode": "415601030000000001000000E8030000000000002E0000000200000000000000000000000000000000010000000000000000003275074E03064E040840020901016A01010162"
+        }
+      },
+      "observed_also_hex": {
+        "py": {
+          "decode": "ok",
+          "reencode": "415601030000000001000000E80300000000000032000000020000000000000000000000000000000001000000000000000000329875E807904E03A006904E8080048008400101010162"
+        },
+        "ts": {
+          "decode": "ok",
+          "reencode": "415601030000000001000000E80300000000000032000000020000000000000000000000000000000001000000000000000000329875E807904E03A006904E8080048008400101010162"
+        }
+      },
+      "decision": "v0.3.1(안 나 변형): 표 밖 사전 종류는 읽고 버리며 값에 넣지 않음(순서 보존), 같은 종류가 두 번 오면 E_MISSION. hex 는 kind 9 를 버리고 targets 만 남음, also_hex 는 kind 1 겹침이라 E_MISSION",
+      "check": {
+        "field": "control.dict",
+        "value_json": {
+          "targets": [
+            "",
+            "b"
+          ]
+        },
+        "also_error": "E_MISSION"
+      }
+    },
+    {
+      "id": "N1",
+      "title": "최소 길이가 아닌 varint(86 00 = 6)를 두 디코더가 받고, 다시 인코드하면 짧아짐",
+      "status": "규격이 허용",
+      "kind": "rt_noncanonical",
+      "hex": "41 56 01 03 00 00 00 00 08 00 00 00 C0 F3 5E 01 00 00 00 00 06 00 00 00 04 41 86 00 2D 00",
+      "spec": [
+        "기본 인코딩 표: `uvar` | LEB128 부호 없는 varint. 하위 7비트부터, 최상위 비트 1이면 다음 바이트가 이어짐. 값은 0~2^32-1, 최대 5바이트이고 5번째 바이트가 `0x0F` 를 넘으면 `E_VARINT_TOO_LONG`"
+      ],
+      "judgement": "두 코덱이 같게 동작한다. 명세는 5바이트 한도만 두고 최소 길이를 요구하지 않는다. 받는 것이 맞다면 '정규형이 아닐 수 있고 CRC 는 받은 바이트로 잰다'를 적고, 거절하려면 새 오류 조건이 필요함",
+      "observed_after_fix": {
+        "py": {
+          "decode": "ok",
+          "reencode": "415601030000000008000000C0F35E0100000000050000000441062D00"
+        },
+        "ts": {
+          "decode": "ok",
+          "reencode": "415601030000000008000000C0F35E0100000000050000000441062D00"
+        }
+      },
+      "decision": "v0.3.1: 최소 길이가 아닌 varint 는 받는다고 기본 인코딩 표에 적음. ACK CRC 는 받은 바이트로 잼. 거절은 v0.4 에서 다시 봄"
+    },
+    {
+      "id": "N2",
+      "title": "STATE, ACK, MODEL_INPUT, INFERENCE_RESULT 끝 남는 바이트를 두 디코더가 무시",
+      "status": "고침",
+      "kind": "rt_noncanonical",
+      "hex": "41 56 01 06 00 00 00 00 03 00 00 00 88 13 00 00 00 00 00 00 07 00 00 00 02 00 03 00 00 00 AA",
+      "spec": [
+        "검사 순서 11. 본문 디코드: ... 남는 바이트면 `E_LENGTH`",
+        "이벤트 묶음: 이벤트를 모두 읽은 뒤 페이로드에 바이트가 남으면 `E_LENGTH` 입니다.",
+        "CONTROL 레이아웃: body는 아래 순서의 바이너리 필드이고, 끝에 남는 바이트는 무시합니다.",
+        "확장 블록: 확장 블록은 끝에 붙는 선택 필드라서 옛 디코더도 건너뛸 수 있습니다."
+      ],
+      "judgement": "두 코덱이 같게 동작한다. DATA(E_LENGTH)와 CONTROL(무시)은 명세가 정했지만 이 네 메시지는 정하지 않았다. 검사 순서 11단계의 '남는 바이트면 E_LENGTH' 를 모든 메시지에 걸면 두 코덱 다 어긋나고, 확장 블록처럼 끝에 붙는 선택 필드를 위해 무시하는 것이면 명세에 적어야 함",
+      "observed_after_fix": {
+        "py": {
+          "decode": "ok",
+          "reencode": "415601060000000003000000881300000000000006000000020003000000"
+        },
+        "ts": {
+          "decode": "ok",
+          "reencode": "415601060000000003000000881300000000000006000000020003000000"
+        }
+      },
+      "decision": "v0.3.1: STATE, ACK, MODEL_INPUT, INFERENCE_RESULT 는 정의된 필드, 선택 묶음, 확장 블록을 읽은 뒤 바이트가 남으면 검사 순서 11단계대로 E_LENGTH. 이 hex 의 STATE 는 v0.3.1 에 선택 묶음(action_event_seq)이 생겨 남는 0xAA 를 그 uvar 로 읽다가 끝을 넘으므로 E_TRUNCATED. 묶음까지 다 읽은 뒤 남는 바이트는 TV61~TV64 가 E_LENGTH 로 봄",
+      "check": {
+        "error": "E_TRUNCATED"
+      },
+      "observed_v031": {
+        "py": {
+          "decode_error": "E_TRUNCATED"
+        },
+        "ts": {
+          "decode_error": "E_TRUNCATED"
+        }
+      }
+    },
+    {
+      "id": "N3",
+      "title": "이벤트 flags 바이트의 예약 비트(INPUT flags 0x02, CHECKPOINT 비트5~7)를 무시하고 다시 인코드하면 0",
+      "status": "규격이 허용",
+      "kind": "rt_noncanonical",
+      "hex": "41 56 01 01 0C 00 02 00 03 00 00 00 70 03 2D 00 00 00 00 00 15 00 00 00 50 09 00 0E 07 90 0A CC 05 00 00 14 08 A0 9C 01 00 02 01 0C 02",
+      "spec": [
+        "값 표: 포인터 `flags` | 비트0 `trusted`(`isTrusted`). 나머지 0 / `CHECKPOINT` `flags` | 비트0 포인터 위치 앎, 비트1 문서 보임, 비트2 창 포커스, 비트3~4 `pointer_type`, 비트5~7 0",
+        "Flags 표: 5~15 | 예약 | 0이어야 함. 1이면 `E_FLAGS`"
+      ],
+      "judgement": "두 코덱이 같게 동작한다. 헤더 예약 비트는 E_FLAGS 로 정했지만 이벤트 flags 는 '0' 이라고만 해서 받는 쪽 동작이 없다",
+      "observed_after_fix": {
+        "py": {
+          "decode": "ok",
+          "reencode": "415601010C0002000300000070032D0000000000150000005009000E07900ACC0500001408A09C010002010C00"
+        },
+        "ts": {
+          "decode": "ok",
+          "reencode": "415601010C0002000300000070032D0000000000150000005009000E07900ACC0500001408A09C010002010C00"
+        }
+      },
+      "decision": "v0.3.1: 이벤트 flags 의 예약 비트는 앞으로 확장을 위해 받는 쪽이 무시한다고 값 표에 적음. 보내는 쪽은 0"
+    },
+    {
+      "id": "N4",
+      "title": "json 공백과 수 표기(-0, 1E2)를 받고 다시 인코드하면 압축된 모양",
+      "status": "규격이 허용",
+      "kind": "rt_noncanonical",
+      "hex": "41 56 01 03 00 00 00 00 03 00 00 00 40 16 40 00 00 00 00 00 23 00 00 00 03 01 02 02 3E 02 1C 20 7B 22 69 74 65 6D 22 3A 22 70 32 22 2C 22 70 72 69 63 65 22 3A 33 31 39 30 30 7D",
+      "spec": [
+        "기본 인코딩 표: `json` | `str` 과 같은 바이트이고 내용은 공백 없는 JSON 객체(Python `separators=(',',':')`, `ensure_ascii=False`). 최상위가 객체가 아니면 `E_CONTROL_BODY`.",
+        "오류 코드 표: 12 `E_CONTROL_BODY` | `json` 이 UTF-8 JSON 객체가 아님, `str` UTF-8 오류",
+        "기본 인코딩 표 `json` 칸: 같은 값을 두 언어가 같은 바이트로 쓰려면 키가 \"9\" 같은 배열 번호 모양이 아니어야 하고(JS 객체는 그런 키를 앞으로 옮김) 수는 정수여야 합니다(`1.0`, `1e-07` 처럼 실수 표기가 다름). 이 조건을 어겨도 디코드 값은 같고, ACK CRC는 보낸 바이트 그대로를 재므로 영향이 없습니다"
+      ],
+      "judgement": "공백 없는 모양은 쓰는 쪽 규칙이고, 받는 쪽 오류는 'JSON 객체가 아님' 뿐이라 공백이 있는 객체를 받는 것은 명세와 맞음. 다시 쓴 바이트가 달라도 디코드 값은 같다",
+      "observed_after_fix": {
+        "py": {
+          "decode": "ok",
+          "reencode": "415601030000000003000000401640000000000022000000030102023E021B7B226974656D223A227032222C227072696365223A33313930307D"
+        },
+        "ts": {
+          "decode": "ok",
+          "reencode": "415601030000000003000000401640000000000022000000030102023E021B7B226974656D223A227032222C227072696365223A33313930307D"
+        }
+      }
+    },
+    {
+      "id": "N5",
+      "title": "CONTROL body 끝 남는 바이트",
+      "status": "규격이 허용",
+      "kind": "rt_noncanonical",
+      "hex": "41 56 01 03 00 00 00 00 09 00 00 00 00 00 00 00 00 00 00 00 03 00 00 00 05 06 06",
+      "spec": [
+        "CONTROL 레이아웃: body는 아래 순서의 바이너리 필드이고, 끝에 남는 바이트는 무시합니다."
+      ],
+      "judgement": "명세대로 무시하고 trailing_offset 을 알려 줌(TV34)",
+      "observed_after_fix": {
+        "py": {
+          "decode": "ok",
+          "reencode": "4156010300000000090000000000000000000000020000000506"
+        },
+        "ts": {
+          "decode": "ok",
+          "reencode": "4156010300000000090000000000000000000000020000000506"
+        }
+      }
+    },
+    {
+      "id": "N6",
+      "title": "아는 이벤트의 정의된 필드 뒤 남는 바이트",
+      "status": "규격이 허용",
+      "kind": "rt_noncanonical",
+      "hex": "41 56 01 01 04 00 01 00 01 00 00 00 F5 FF FF FF FF FF 1F 00 0A 00 00 00 50 08 02 00 07 00 14 28 00 00",
+      "spec": [
+        "이벤트 묶음: 아는 type에서 정의된 필드 뒤에 바이트가 남으면 무시합니다."
+      ],
+      "judgement": "명세대로 무시함",
+      "observed_after_fix": {
+        "py": {
+          "decode": "ok",
+          "reencode": "415601010400010001000000F5FFFFFFFFFF1F0009000000500702000700142800"
+        },
+        "ts": {
+          "decode": "ok",
+          "reencode": "415601010400010001000000F5FFFFFFFFFF1F0009000000500702000700142800"
+        }
+      }
+    },
+    {
+      "id": "N7",
+      "title": "INFERENCE_RESULT 확장 블록의 모르는 tag 와 겹친 tag 를 버림",
+      "status": "규격이 허용",
+      "kind": "rt_noncanonical",
+      "hex": "41 56 01 04 00 00 00 00 04 00 00 00 70 17 00 00 00 00 00 00 17 00 00 00 03 00 00 00 00 0A 05 00 00 00 3F 01 03 03 09 01 07 01 01 02 01 01 09",
+      "spec": [
+        "확장 블록: 모르는 `tag` 는 `length` 만큼 건너뛰고, 같은 `tag` 가 두 번 오면 처음 것만 씁니다. `body` 안 필드가 `length` 를 넘으면 `E_TRUNCATED`, 남는 바이트는 무시합니다."
+      ],
+      "judgement": "명세대로 모르는 tag 9 를 건너뛰고 겹친 tag 1 은 처음 것만 씀. 다시 인코드하면 블록 하나만 남음",
+      "observed_after_fix": {
+        "py": {
+          "decode": "ok",
+          "reencode": "41560104000000000400000070170000000000001100000003000000000A050000003F010301010102"
+        },
+        "ts": {
+          "decode": "ok",
+          "reencode": "41560104000000000400000070170000000000001100000003000000000A050000003F010301010102"
+        }
+      }
+    },
+    {
+      "id": "N8",
+      "title": "모르는 이벤트가 든 DATA 는 다시 인코드할 수 없음",
+      "status": "규격이 허용",
+      "kind": "rt_skip_unknown",
+      "hex": "41 56 01 01 0C 00 03 00 06 00 00 00 80 8D 5B 00 00 00 00 00 1E 00 00 00 50 0A 00 2B 07 FC 0A C4 06 B0 09 01 6E 04 D0 0F AA BB 03 0A 90 4E FC 0A C4 06 00 00 01 01",
+      "spec": [
+        "이벤트 묶음: 모르는 type: `dt` 는 읽어 시각 누적에 더하고, 남은 `length` 바이트를 건너뜁니다."
+      ],
+      "judgement": "디코더는 명세대로 모르는 이벤트의 나머지 바이트를 건너뛰고 값에 남기지 않으므로 인코더가 원래 바이트를 다시 만들 수 없다(인코더는 raw 가 있어야 씀). 퍼저는 이 경우 재인코드 비교를 건너뜀",
+      "observed_after_fix": {
+        "py": {
+          "decode": "ok",
+          "reencode_error": "E_ENCODE: 필드 raw 가 없음"
+        },
+        "ts": {
+          "decode": "ok",
+          "reencode_error": "E_ENCODE: 필드 raw 가 없음"
+        }
+      }
+    },
+    {
+      "id": "N9",
+      "title": "프레임 중간 CHECKPOINT 의 event_seq 가 자리 번호와 다르면 디코드는 되고 다시 인코드는 E_ENCODE",
+      "status": "규격이 허용",
+      "kind": "rt_checkpoint_seq",
+      "hex": "41 56 01 01 04 00 02 00 01 00 00 00 E8 03 00 00 00 00 00 00 12 00 00 00 50 07 00 01 07 14 28 00 00 50 07 00 01 07 14 28 00 00",
+      "spec": [
+        "골든 벡터 절: 프레임 중간 `CHECKPOINT` 의 `event_seq` 는 그 자리 번호(첫 `CHECKPOINT` 번호 + 순번)와 같아야 합니다. 인코더는 다르면 `E_ENCODE` 로 거절하고, 디코더는 그 필드 값을 그대로 보이되 다른 이벤트 번호는 첫 `CHECKPOINT` 기준으로 셉니다."
+      ],
+      "judgement": "명세가 정한 그대로임",
+      "observed_after_fix": {
+        "py": {
+          "decode": "ok",
+          "reencode_error": "E_ENCODE: 1번째 이벤트 event_seq 1 가 2 가 아님"
+        },
+        "ts": {
+          "decode": "ok",
+          "reencode_error": "E_ENCODE: 1번째 이벤트 event_seq 1 가 2 가 아님"
+        }
+      }
+    }
+  ],
+  "run_v031": {
+    "seed": 20261109,
+    "total": 22000,
+    "categories": {
+      "mutate": {
+        "cases": 8800,
+        "both_error": 7012,
+        "both_ok": 1788,
+        "rt_skip_unknown": 26,
+        "rt_noncanonical": 489,
+        "mismatch_reencode": 2
+      },
+      "random": {
+        "cases": 3960,
+        "both_error": 3960
+      },
+      "header_ok": {
+        "cases": 6160,
+        "both_error": 5535,
+        "both_ok": 625,
+        "rt_noncanonical": 858
+      },
+      "boundary": {
+        "cases": 3080,
+        "both_ok": 1586,
+        "both_error": 1494,
+        "rt_noncanonical": 618,
+        "mismatch_reencode": 26,
+        "rt_skip_unknown": 174
+      }
+    },
+    "failing_groups": 0,
+    "note": "v0.3.1 결정(F4, F5, F6, F8, N2) 반영 뒤. 남은 비정규 재인코드는 F7(규격이 허용)뿐"
+  }
+}

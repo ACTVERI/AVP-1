@@ -1,0 +1,596 @@
+{
+ "format": "avp1-test-vectors",
+ "version": "0.2-extra",
+ "source": "명세 밖 경계 사례. 기대 JSON 은 py/avp1/codec.py 결과이며 TS 디코더와 비교함",
+ "dict": {
+  "targets": [
+   "",
+   "search_box",
+   "result_list",
+   "cart_button"
+  ],
+  "routes": [
+   "",
+   "/shop",
+   "/shop/cart"
+  ]
+ },
+ "vectors": [
+  {
+   "id": "X1",
+   "name": "지원하지 않는 Version",
+   "hex": "41 56 02 01 04 00 01 00 01 00 00 00 E8 03 00 00 00 00 00 00 09 00 00 00 50 07 00 01 07 14 28 00 00",
+   "error": "E_VERSION"
+  },
+  {
+   "id": "X2",
+   "name": "메시지가 24 + Payload Length 보다 1바이트 김",
+   "hex": "41 56 01 01 04 00 01 00 01 00 00 00 E8 03 00 00 00 00 00 00 09 00 00 00 50 07 00 01 07 14 28 00 00 00",
+   "error": "E_LENGTH"
+  },
+  {
+   "id": "X3",
+   "name": "예약 플래그 비트 5",
+   "hex": "41 56 01 01 24 00 01 00 01 00 00 00 E8 03 00 00 00 00 00 00 09 00 00 00 50 07 00 01 07 14 28 00 00",
+   "error": "E_FLAGS"
+  },
+  {
+   "id": "X4",
+   "name": "ACK 의 Event Count 가 0이 아님",
+   "hex": "41 56 01 02 00 00 01 00 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+   "error": "E_HEADER"
+  },
+  {
+   "id": "X5",
+   "name": "Payload Length 65,537",
+   "hex": "41 56 01 01 00 00 00 00 01 00 00 00 00 00 00 00 00 00 00 00 01 00 01 00",
+   "error": "E_FRAME_TOO_LARGE"
+  },
+  {
+   "id": "X6",
+   "name": "Event Count 1,025",
+   "hex": "41 56 01 01 04 00 01 04 01 00 00 00 E8 03 00 00 00 00 00 00 09 00 00 00 50 07 00 01 07 14 28 00 00",
+   "error": "E_FRAME_TOO_LARGE"
+  },
+  {
+   "id": "X7",
+   "name": "이벤트 length 1,025",
+   "hex": "41 56 01 01 04 00 01 00 01 00 00 00 00 00 00 00 00 00 00 00 04 04 00 00 50 81 08 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+   "error": "E_EVENT_TOO_LARGE"
+  },
+  {
+   "id": "X8",
+   "name": "이벤트 length 가 페이로드 끝을 넘음",
+   "hex": "41 56 01 01 04 00 01 00 01 00 00 00 00 00 00 00 00 00 00 00 05 00 00 00 50 09 00 01 07",
+   "error": "E_TRUNCATED"
+  },
+  {
+   "id": "X9",
+   "name": "Event Count 2인데 이벤트 1개",
+   "hex": "41 56 01 01 04 00 02 00 01 00 00 00 E8 03 00 00 00 00 00 00 09 00 00 00 50 07 00 01 07 14 28 00 00",
+   "error": "E_TRUNCATED"
+  },
+  {
+   "id": "X10",
+   "name": "Event Count 만큼 읽은 뒤 바이트가 남음",
+   "hex": "41 56 01 01 04 00 01 00 01 00 00 00 E8 03 00 00 00 00 00 00 0A 00 00 00 50 07 00 01 07 14 28 00 00 00",
+   "error": "E_LENGTH"
+  },
+  {
+   "id": "X11",
+   "name": "24바이트보다 짧은 메시지",
+   "hex": "41 56 01 01 04 00 01 00 01 00 00 00 E8 03 00 00 00 00 00 00 09 00 00",
+   "error": "E_HEADER"
+  },
+  {
+   "id": "X12",
+   "name": "잘못된 Magic",
+   "hex": "41 58 01 01 04 00 01 00 01 00 00 00 E8 03 00 00 00 00 00 00 09 00 00 00 50 07 00 01 07 14 28 00 00",
+   "error": "E_MAGIC"
+  },
+  {
+   "id": "X13",
+   "name": "첫 이벤트가 CHECKPOINT 가 아님",
+   "hex": "41 56 01 01 00 00 01 00 01 00 00 00 00 00 00 00 00 00 00 00 05 00 00 00 01 03 00 02 02",
+   "error": "E_NO_CHECKPOINT"
+  },
+  {
+   "id": "X14",
+   "name": "이벤트 length 0",
+   "hex": "41 56 01 01 04 00 01 00 01 00 00 00 00 00 00 00 00 00 00 00 02 00 00 00 50 00",
+   "error": "E_TRUNCATED"
+  },
+  {
+   "id": "X15",
+   "name": "CHANGE_ORDER params 가 JSON 객체가 아님",
+   "hex": "41 56 01 03 00 00 00 00 02 00 00 00 00 00 00 00 00 00 00 00 09 00 00 00 03 01 01 02 10 00 02 5B 5D",
+   "error": "E_CONTROL_BODY"
+  },
+  {
+   "id": "X16",
+   "name": "CONTROL 페이로드가 비어 subtype 이 없음",
+   "hex": "41 56 01 03 00 00 00 00 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+   "error": "E_TRUNCATED"
+  },
+  {
+   "id": "X17",
+   "name": "HELLO proto_minor 1(v0.1)",
+   "hex": "41 56 01 03 00 00 00 00 00 00 00 00 FC 08 00 00 00 00 00 00 49 00 00 00 01 01 00 01 02 05 0B 73 74 6C 61 62 2F 30 2E 32 2E 30 0D 70 6B 5F 73 74 6C 61 62 5F 64 65 6D 6F 12 6D 69 73 73 69 6F 6E 5F 63 6F 6D 70 61 72 65 5F 76 31 00 E4 30 7B CD 5F 06 00 A0 08 D4 07 E8 07 05 00 01 8E 01 00 0C 64",
+   "error": "E_VERSION"
+  },
+  {
+   "id": "X18",
+   "name": "ai_score 1.5",
+   "hex": "41 56 01 04 00 00 00 00 01 00 00 00 00 00 00 00 00 00 00 00 0B 00 00 00 01 00 00 00 00 0A 03 00 00 C0 3F",
+   "error": "E_RANGE"
+  },
+  {
+   "id": "X19",
+   "name": "MODEL_INPUT dtype 2",
+   "hex": "41 56 01 05 00 00 00 00 01 00 00 00 00 00 00 00 00 00 00 00 16 00 00 00 01 00 00 00 01 00 00 00 02 00 00 00 02 00 01 00 01 00 00 00 80 3F",
+   "error": "E_RANGE"
+  },
+  {
+   "id": "X20",
+   "name": "Timestamp 2^53",
+   "hex": "41 56 01 01 04 00 01 00 01 00 00 00 00 00 00 00 00 00 20 00 09 00 00 00 50 07 00 01 07 14 28 00 00",
+   "error": "E_HEADER"
+  },
+  {
+   "id": "X21",
+   "name": "ERROR message 257B",
+   "hex": "41 56 01 03 00 00 00 00 01 00 00 00 00 00 00 00 00 00 00 00 07 01 00 00 06 0F 00 01 81 02 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61",
+   "error": "E_CONTROL_TOO_LARGE"
+  },
+  {
+   "id": "X22",
+   "name": "WELCOME 사전 항목 65개",
+   "hex": "41 56 01 03 00 00 00 00 01 00 00 00 00 00 00 00 00 00 00 00 AA 00 00 00 02 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 0F 00 00 00 00 00 00 00 00 00 00 01 01 41 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61 01 61",
+   "error": "E_MISSION"
+  },
+  {
+   "id": "X23",
+   "name": "확장 features 값이 NaN",
+   "hex": "41 56 01 04 00 00 00 00 01 00 00 00 00 00 00 00 00 00 00 00 16 00 00 00 01 00 00 00 00 0A 03 00 00 00 3F 01 03 01 04 06 01 01 00 00 C0 7F",
+   "error": "E_RANGE"
+  },
+  {
+   "id": "X24",
+   "name": "선택 묶음 first_event_seq 뒤 last_event_seq 가 없음",
+   "hex": "41 56 01 04 00 00 00 00 01 00 00 00 00 00 00 00 00 00 00 00 0C 00 00 00 01 00 00 00 00 0A 03 00 00 00 3F 01",
+   "error": "E_TRUNCATED"
+  },
+  {
+   "id": "X25",
+   "name": "ASSET_CHUNK challenge_id 가 UTF-8 이 아님",
+   "hex": "41 56 01 07 00 00 00 00 01 00 00 00 00 00 00 00 00 00 00 00 2B 00 00 00 01 FF 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00",
+   "error": "E_CONTROL_BODY"
+  },
+  {
+   "id": "X26",
+   "name": "텍스트로 읽으면 안 되는 5번째 varint 바이트(uvar 6바이트)",
+   "hex": "41 56 01 01 04 00 01 00 01 00 00 00 00 00 00 00 00 00 00 00 0E 00 00 00 50 0C 00 80 80 80 80 80 01 07 00 00 00 00",
+   "error": "E_VARINT_TOO_LONG"
+  },
+  {
+   "id": "X27",
+   "name": "HELLO t0_unix_us 2^53 은 JSON 수로 정확히 못 담음",
+   "hex": "41 56 01 03 00 00 00 00 00 00 00 00 FC 08 00 00 00 00 00 00 49 00 00 00 01 02 00 01 02 05 0B 73 74 6C 61 62 2F 30 2E 32 2E 30 0D 70 6B 5F 73 74 6C 61 62 5F 64 65 6D 6F 12 6D 69 73 73 69 6F 6E 5F 63 6F 6D 70 61 72 65 5F 76 31 00 00 00 00 00 00 20 00 A0 08 D4 07 E8 07 05 00 01 8E 01 00 0C 64",
+   "error": "E_RANGE"
+  },
+  {
+   "id": "X30",
+   "name": "위치 모르는 CHECKPOINT 뒤 이동은 x, y 없음. 음수 좌표, 펜, 키 수식, 휠 소수, 홀수 경로, av_key null",
+   "hex": "41 56 01 01 0C 00 09 00 01 00 00 00 E8 03 00 00 00 00 00 00 44 00 00 00 50 07 00 01 16 00 00 00 00 01 04 C8 01 05 08 30 09 C8 01 07 04 00 13 27 1E 28 02 07 00 09 0B 02 02 00 07 01 03 64 02 02 10 05 64 0A 07 09 00 20 07 64 F9 01 BC 05 01 02 40 04 64 00 01 07 41 04 64 01 09 00",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "DATA",
+     "flags": [
+      "HAS_CHECKPOINT",
+      "ACK_REQUESTED"
+     ],
+     "event_count": 9,
+     "seq": 1,
+     "timestamp_us": 1000,
+     "payload_length": 68
+    },
+    "events": [
+     {
+      "t_us": 1000,
+      "event_seq": 1,
+      "event_type": "CHECKPOINT",
+      "pointer_known": false,
+      "doc_visible": true,
+      "window_focused": true,
+      "pointer_type": "pen",
+      "x": 0,
+      "y": 0,
+      "scroll_y": 0,
+      "anchor": 0
+     },
+     {
+      "t_us": 1100,
+      "event_seq": 2,
+      "event_type": "POINTER_MOVE",
+      "dx": -3,
+      "dy": 4
+     },
+     {
+      "t_us": 1200,
+      "event_seq": 3,
+      "event_type": "TARGET_INFO",
+      "target": 7,
+      "target_role": "sensitive_input",
+      "av_key": null,
+      "target_bbox": [
+       -10,
+       -20,
+       30,
+       40
+      ]
+     },
+     {
+      "t_us": 1200,
+      "event_seq": 4,
+      "event_type": "POINTER_DOWN",
+      "x": -5,
+      "y": -6,
+      "button": 2,
+      "pointer_type": "pen",
+      "trusted": false,
+      "target": 7
+     },
+     {
+      "t_us": 1250,
+      "event_seq": 5,
+      "event_type": "POINTER_MOVE",
+      "dx": 1,
+      "dy": 1,
+      "x": -4,
+      "y": -5
+     },
+     {
+      "t_us": 1300,
+      "event_seq": 6,
+      "event_type": "KEY_DOWN",
+      "key_category": "ime",
+      "trusted": true,
+      "repeat": true,
+      "is_composing": true,
+      "modifier_flags": [
+       "shift",
+       "meta"
+      ],
+      "target": null
+     },
+     {
+      "t_us": 1350,
+      "event_seq": 7,
+      "event_type": "WHEEL",
+      "wheel_dx": -1.25,
+      "wheel_dy": 3.5,
+      "wheel_delta_mode": "line",
+      "target": 2
+     },
+     {
+      "t_us": 1400,
+      "event_seq": 8,
+      "event_type": "NAVIGATION_START",
+      "source": "dom",
+      "nav_type": "initial_load",
+      "route": 7
+     },
+     {
+      "t_us": 1450,
+      "event_seq": 9,
+      "event_type": "NAVIGATION_END",
+      "source": "observer",
+      "nav_type": 9,
+      "route": null
+     }
+    ]
+   }
+  },
+  {
+   "id": "X31",
+   "name": "VIEWPORT_CHANGE, COLLECTION_LOSS, UI_CHANGE_FAILED, CAPTCHA_VIEW, 중간 CHECKPOINT, 음수 dt",
+   "hex": "41 56 01 01 16 00 06 00 01 00 00 00 E8 03 00 00 00 00 00 00 34 00 00 00 50 07 00 01 07 14 28 00 00 51 08 D0 0F 80 0A D0 05 DC 0B 52 03 13 01 0C 61 04 DC 01 02 06 50 08 C8 01 05 09 01 0A 63 01 62 0A C8 01 01 01 07 14 C0 02 F0 01",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "DATA",
+     "flags": [
+      "FINAL",
+      "HAS_CHECKPOINT",
+      "TRUNCATED"
+     ],
+     "event_count": 6,
+     "seq": 1,
+     "timestamp_us": 1000,
+     "payload_length": 52
+    },
+    "events": [
+     {
+      "t_us": 1000,
+      "event_seq": 1,
+      "event_type": "CHECKPOINT",
+      "pointer_known": true,
+      "doc_visible": true,
+      "window_focused": true,
+      "pointer_type": "mouse",
+      "x": 10,
+      "y": 20,
+      "scroll_y": 0,
+      "anchor": 0
+     },
+     {
+      "t_us": 2000,
+      "event_seq": 2,
+      "event_type": "VIEWPORT_CHANGE",
+      "viewport_width": 1280,
+      "viewport_height": 720,
+      "dpr_milli": 1500
+     },
+     {
+      "t_us": 1990,
+      "event_seq": 3,
+      "event_type": "COLLECTION_LOSS",
+      "reason": "buffer_overflow",
+      "count": 12
+     },
+     {
+      "t_us": 2100,
+      "event_seq": 4,
+      "event_type": "UI_CHANGE_FAILED",
+      "anchor": 2,
+      "reason": "session_finishing"
+     },
+     {
+      "t_us": 2200,
+      "event_seq": 5,
+      "event_type": "CHECKPOINT",
+      "pointer_known": true,
+      "doc_visible": false,
+      "window_focused": false,
+      "pointer_type": "touch",
+      "x": -1,
+      "y": 5,
+      "scroll_y": 99,
+      "anchor": 1
+     },
+     {
+      "t_us": 2300,
+      "event_seq": 6,
+      "event_type": "CAPTCHA_VIEW",
+      "phase": "shown",
+      "challenge_no": 1,
+      "view_x": -4,
+      "view_y": 10,
+      "view_w": 320,
+      "view_h": 240
+     }
+    ]
+   }
+  },
+  {
+   "id": "X32",
+   "name": "페이로드 빈 클라이언트 ACK",
+   "hex": "41 56 01 02 00 00 00 00 03 00 00 00 4D 00 00 00 00 00 00 00 00 00 00 00",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "ACK",
+     "flags": [],
+     "event_count": 0,
+     "seq": 3,
+     "timestamp_us": 77,
+     "payload_length": 0
+    }
+   }
+  },
+  {
+   "id": "X33",
+   "name": "STATE",
+   "hex": "41 56 01 06 00 00 00 00 04 00 00 00 05 00 00 00 00 00 00 00 06 00 00 00 06 07 00 00 00 00",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "STATE",
+     "flags": [],
+     "event_count": 0,
+     "seq": 4,
+     "timestamp_us": 5,
+     "payload_length": 6
+    },
+    "state": {
+     "state": "ENDED",
+     "reason": "insufficient_data",
+     "window_id": 0
+    }
+   }
+  },
+  {
+   "id": "X34",
+   "name": "ERROR 비치명 E_SUBTYPE",
+   "hex": "41 56 01 03 00 00 00 00 02 00 00 00 00 00 00 00 00 00 00 00 19 00 00 00 06 0D 00 00 14 EB AA A8 EB A5 B4 EB 8A 94 20 73 75 62 74 79 70 65 20 31 33",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "CONTROL",
+     "flags": [],
+     "event_count": 0,
+     "seq": 2,
+     "timestamp_us": 0,
+     "payload_length": 25
+    },
+    "control": {
+     "subtype": "ERROR",
+     "code": "E_SUBTYPE",
+     "fatal": false,
+     "message": "모르는 subtype 13"
+    }
+   }
+  },
+  {
+   "id": "X35",
+   "name": "STOP limit",
+   "hex": "41 56 01 03 00 00 00 00 09 00 00 00 00 00 00 00 00 00 00 00 02 00 00 00 05 02",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "CONTROL",
+     "flags": [],
+     "event_count": 0,
+     "seq": 9,
+     "timestamp_us": 0,
+     "payload_length": 2
+    },
+    "control": {
+     "subtype": "STOP",
+     "reason": "limit"
+    }
+   }
+  },
+  {
+   "id": "X36",
+   "name": "모르는 CONTROL subtype 0x80 은 body_hex 로 넘김",
+   "hex": "41 56 01 03 00 00 00 00 03 00 00 00 00 00 00 00 00 00 00 00 03 00 00 00 80 01 FF",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "CONTROL",
+     "flags": [],
+     "event_count": 0,
+     "seq": 3,
+     "timestamp_us": 0,
+     "payload_length": 3
+    },
+    "control": {
+     "subtype": 128,
+     "body_hex": "01FF"
+    }
+   }
+  },
+  {
+   "id": "X37",
+   "name": "SCORE_REQUEST 본문 없음",
+   "hex": "41 56 01 03 00 00 00 00 04 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 09",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "CONTROL",
+     "flags": [],
+     "event_count": 0,
+     "seq": 4,
+     "timestamp_us": 0,
+     "payload_length": 1
+    },
+    "control": {
+     "subtype": "SCORE_REQUEST"
+    }
+   }
+  },
+  {
+   "id": "X38",
+   "name": "HELLO 선택 필드 timer_resolution_us 없음, 외부 사이트",
+   "hex": "41 56 01 03 00 00 00 00 00 00 00 00 0A 00 00 00 00 00 00 00 39 00 00 00 01 02 00 01 01 00 0B 73 74 6C 61 62 2F 30 2E 32 2E 30 02 70 6B 0E 65 78 74 5F 66 69 6E 61 6E 63 65 5F 76 31 00 E4 30 7B CD 5F 06 00 A0 06 D8 04 E8 07 01 00 01 8E 01 00 04",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "CONTROL",
+     "flags": [],
+     "event_count": 0,
+     "seq": 0,
+     "timestamp_us": 10,
+     "payload_length": 57
+    },
+    "control": {
+     "subtype": "HELLO",
+     "proto_minor": 2,
+     "caps": 0,
+     "client_kind": "electron_lab",
+     "mission_kind": "external_site",
+     "run_flags": 0,
+     "sdk_version": "stlab/0.2.0",
+     "client_key": "pk",
+     "mission_id": "ext_finance_v1",
+     "t0_unix_us": 1794186000000000,
+     "viewport_width": 800,
+     "viewport_height": 600,
+     "dpr_milli": 1000,
+     "input_caps": 1,
+     "max_touch_points": 0,
+     "browser_family": 1,
+     "browser_major": 142,
+     "sampling_policy": 0,
+     "env_flags": 4
+    }
+   }
+  },
+  {
+   "id": "X39",
+   "name": "WELCOME 사전 없음(외부 사이트)",
+   "hex": "41 56 01 03 00 00 00 00 01 00 00 00 01 00 00 00 00 00 00 00 2D 00 00 00 02 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 00 00 00 07 32 98 75 E8 07 90 4E 03 00 90 4E 80 80 04 80 08 40 00",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "CONTROL",
+     "flags": [],
+     "event_count": 0,
+     "seq": 1,
+     "timestamp_us": 1,
+     "payload_length": 45
+    },
+    "control": {
+     "subtype": "WELCOME",
+     "session_id": "00000000000000000000000000000000",
+     "server_open_unix_us": 1,
+     "caps": 0,
+     "server_flags": 7,
+     "flush_ms": 50,
+     "keepalive_ms": 15000,
+     "infer_interval_ms": 1000,
+     "window_ms": 10000,
+     "min_action_events": 3,
+     "captcha_threshold_milli": 0,
+     "captcha_sustain_ms": 10000,
+     "max_payload_bytes": 65536,
+     "max_events_per_frame": 1024,
+     "max_unacked_frames": 64,
+     "dict": {}
+    }
+   }
+  },
+  {
+   "id": "X40",
+   "name": "확장 블록: 모르는 tag 건너뜀, 같은 tag 는 처음 것, 한도 넘은 블록만 버림",
+   "hex": "41 56 01 04 00 00 00 00 01 00 00 00 00 00 00 00 00 00 00 00 1C 00 00 00 01 00 00 00 00 0A 03 00 00 00 3F 01 03 04 09 02 AB CD 01 01 05 01 01 06 04 02 41 00",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "INFERENCE_RESULT",
+     "flags": [],
+     "event_count": 0,
+     "seq": 1,
+     "timestamp_us": 0,
+     "payload_length": 28
+    },
+    "result": {
+     "window_id": 1,
+     "window_start_ms": 0,
+     "window_end_ms": 10,
+     "event_count": 3,
+     "ai_score": 0.5,
+     "ai_score_bits": "3F000000",
+     "first_event_seq": 1,
+     "last_event_seq": 3,
+     "ext": {
+      "schema_id": 5
+     }
+    }
+   },
+   "encode": false
+  }
+ ]
+}
