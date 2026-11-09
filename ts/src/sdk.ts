@@ -3,7 +3,7 @@ import type { Obj } from "./codec.js";
 import { Session, type ChangeReport, type Clock, type SessionEnd, type TapRecord } from "./session.js";
 import { wsTransport, type WebSocketLike } from "./transport-ws.js";
 
-export const SDK_VERSION = "stlab/0.3.0";
+export const SDK_VERSION = "stlab/0.3.2";
 
 export interface ActveriOptions {
   /** 공개 앱 키. URL 의 k 와 HELLO client_key 에 같은 값이 실림 */

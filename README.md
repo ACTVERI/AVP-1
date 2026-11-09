@@ -96,9 +96,9 @@ python tools/fuzz/fuzz.py --total 2000
 
 | 명령 | 보는 내용 | 결과 |
 |---|---|---|
-| `pnpm test`(ts) | 골든 벡터와 경계 사례, Session 단위 시험, 수집기와 화면 변화, ws 시험 서버 연결, 층 규칙, TS 와 Python 왕복, 차등 퍼징 1,000건 | 14개 파일, 329개 통과 |
+| `pnpm test`(ts) | 골든 벡터와 경계 사례, Session 단위 시험, 수집기와 화면 변화, ws 시험 서버 연결, 층 규칙, TS 와 Python 왕복, 차등 퍼징 1,000건 | 15개 파일, 390개 통과 |
 | `pnpm typecheck`, `pnpm build`(ts) | 타입 검사, ESM 번들 | 오류 없음 |
-| `python -m pytest -q`(py) | 골든 벡터, 코덱, 판정 토큰 | 232개 통과 |
+| `python -m pytest -q`(py) | 골든 벡터, 코덱, 판정 토큰 | 258개 통과 |
 | `python tools/fuzz/fuzz.py --total 2000` | TS 와 Python 디코더 차등 퍼징 2,000건 | 버그와 불일치 0묶음 |
 
 TS 와 Python 왕복 시험은 `python` 명령으로 Python 을 부릅니다. 이름이 다르면 `PYTHON` 환경 변수로 경로를 줍니다. 왕복 시험만 따로 돌릴 때는 `cd ts && pnpm exec vitest run test/cross-lang.test.ts` 이고, `AVP_CROSS_SEED=7` 처럼 시드를 바꿀 수 있습니다.

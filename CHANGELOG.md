@@ -9,6 +9,7 @@ AVP/1 규격과 두 코덱의 버전별 변경입니다. 항목마다 자세한 
 - `CAPTCHA_CHALLENGE` 끝에 `frame_url`(1,024B 이하, 불투명 값이라 클라이언트는 그대로 엶)을 붙였습니다. iframe 챌린지는 에셋 0, `meta` 는 `kind` 만이고 `ASSET_CHUNK` 를 보내지 않습니다. 에셋 중계는 바이트 배치를 지키려고 선택으로 남겼습니다.
 - `CAPTCHA_ANSWER` 끝에 `verification_token`(128B 이하, `success` 일 때만)을 붙이고 `status` 에 `success`, `fail`, `frame_error` 를 더했습니다. `trajectory` 요약은 없앴습니다.
 - 판별 서버는 토큰을 consume 해 `valid` 이고 같은 챌린지일 때만 통과로 봅니다. `frame_error` 는 `asset_error` 와 같이 1번만 다시 띄웁니다.
+- TS `Session` 은 `frame_url` 을 검사해 `onCaptcha` 의 `frameUrl` 로 넘기고, iframe 의 `postMessage` 는 보낸 창, 출처, 종류, 챌린지 번호가 모두 맞는 첫 결과만 `CAPTCHA_ANSWER` 로 보내며, 10초 안에 `load` 가 없으면 `frame_error` 를 보냅니다. HELLO `sdk_version` 은 `stlab/0.3.2` 입니다.
 - 골든 벡터 TV74~TV87 을 더했습니다(`test-vectors/avp1-v0.3.2.json`). 기존 벡터는 그대로입니다.
 
 항목마다 규격서 표의 B 번호가 붙어 있습니다.

@@ -1,4 +1,4 @@
-// AVP/1 v0.3.1 Protocol Client 상태 기계. 네트워크와 시계는 밖에서 받아 Node 에서도 돌아감.
+// AVP/1 v0.3.2 Protocol Client 상태 기계. 네트워크와 시계는 밖에서 받아 Node 에서도 돌아감.
 import {
   AvpError, buildFrame, CLOSE_CODES, concat, crc32, decodeFrame, encodeEvent, encodeFrame, FLAG, fromHex, LIMITS, MSG, sha256, toHex,
   type Dict, type Obj,
@@ -47,6 +47,8 @@ export interface CaptchaChallenge {
   ttlMs: number;
   meta: Obj;
   assets: CaptchaAsset[];
+  /** iframe 챌린지(v0.3.2)면 CAPTCHA 서버가 준 주소. 서명이 깨지지 않게 고치지 않고 그대로 iframe src 로 씀. 에셋 중계면 없음 */
+  frameUrl?: string;
   /** FINISH 뒤에 받은 챌린지(FINAL 결과로 발동). 답을 보내면 세션이 곧 끝나 CAPTCHA_VIEW closed 를 보내지 않음 */
   final: boolean;
 }
@@ -111,6 +113,9 @@ const TRAJECTORY_MAX_BYTES = 1024;
 // 명세 CAPTCHA_ANSWER: 문제 종류마다 받는 답 키. 표에 없는 키(입력 글자, 클라이언트 판정)는 보내지 않음
 const ANSWER_KEYS: Record<string, string[]> = { guide_sol: ["reached"], drag_order: ["order"] };
 const ANSWER_RESERVED = ["elapsed_ms", "trajectory"];
+// 명세 'CAPTCHA 서버 API (v0.3.2)' 규칙
+const FRAME = { urlMaxBytes: 1024, tokenMaxBytes: 128, loadWaitUs: 10_000_000, messageType: "actveri-captcha" };
+const FRAME_RESULTS = new Set(["success", "fail"]);
 
 interface Pending { seq: number; bytes: Uint8Array }
 interface AssetParts { size: number; sha: string; count: number; parts: Map<number, Uint8Array> }
@@ -119,6 +124,10 @@ interface OpenCaptcha {
   final: boolean;
   assets: Map<number, AssetParts>;
   assetDeadlineUs: number;
+  /** 검사를 통과한 frame_url. 있으면 iframe 챌린지 */
+  frameUrl?: string;
+  /** iframe 챌린지에서 load 를 기다리는 기한. load 를 받으면 지움 */
+  frameDeadlineUs?: number;
   ttlDeadlineUs: number;
   delivered: boolean;
   answered: boolean;
@@ -207,7 +216,7 @@ export class Session {
     return on(this.tapCbs, cb);
   }
 
-  /** 에셋 조각을 다 모아 크기와 SHA-256 을 확인한 챌린지. 확인에 실패하면 부르지 않고 asset_error 를 보냄 */
+  /** 에셋 조각을 다 모아 크기와 SHA-256 을 확인한 챌린지, 또는 규칙에 맞는 frame_url 을 받은 iframe 챌린지. 확인에 실패하면 부르지 않고 asset_error 나 frame_error 를 보냄 */
   onCaptcha(cb: (c: CaptchaChallenge) => void): () => void {
     return on(this.captchaCbs, cb);
   }
@@ -217,8 +226,42 @@ export class Session {
     this.push({ t_us: tUs, event_type: "CAPTCHA_VIEW", phase, challenge_no: this.lastChallengeNo, view_x: rect.x, view_y: rect.y, view_w: rect.w, view_h: rect.h });
   }
 
-  /** 답을 보냄. trajectory 는 명세 표의 키만 남기고 1,024B 를 넘으면 뺌 */
+  /** iframe 의 load 이벤트. 받은 뒤 10초 안에 이것이 없으면 frame_error 를 보냄 */
+  captchaFrameLoaded(): void {
+    if (this.captcha?.frameUrl !== undefined) this.captcha.frameDeadlineUs = undefined;
+  }
+
+  /** iframe 의 로드 오류 */
+  captchaFrameError(): void {
+    if (this.captcha?.frameUrl !== undefined) this.sendAnswer("frame_error", {});
+  }
+
+  /**
+   * 창의 message 이벤트를 넘김. frameWindow 는 챌린지 iframe 의 contentWindow.
+   * 다른 창, 다른 출처, 다른 챌린지가 보낸 결과로 답하면 페이지 스크립트가 캡챠를 건너뛸 수 있어 모두 맞을 때만 받음.
+   * 받아서 CAPTCHA_ANSWER 를 보냈으면 true
+   */
+  captchaMessage(event: { source: unknown; origin: string; data: unknown }, frameWindow: unknown): boolean {
+    const cur = this.captcha;
+    if (!cur || cur.frameUrl === undefined || cur.answered || event.source !== frameWindow || event.origin !== new URL(cur.frameUrl).origin) return false;
+    const d = event.data as Obj;
+    if (!d || typeof d !== "object" || d.type !== FRAME.messageType || d.challenge_id !== cur.c.challenge_id || !FRAME_RESULTS.has(d.status)) return false;
+    this.answerCaptcha({ status: d.status, verification_token: d.token });
+    return true;
+  }
+
+  /**
+   * 답을 보냄. iframe 챌린지는 { status: "success" | "fail", verification_token? } 만 보고 answer 는 늘 {} 이고 trajectory 는 싣지 않음.
+   * 에셋 중계 챌린지(v0.3.1)는 trajectory 를 명세 표의 키만 남기고 1,024B 를 넘으면 뺌
+   */
   answerCaptcha(answer: Obj): void {
+    if (this.captcha?.frameUrl !== undefined) {
+      if (!FRAME_RESULTS.has(answer.status)) throw new Error(`iframe 챌린지의 status 는 success 나 fail 입니다: ${String(answer.status)}`);
+      const token = answer.verification_token;
+      // 토큰이 없거나 한도를 넘으면 토큰 없이 success 를 보내 판단을 서버에 맡김(서버는 fail)
+      const okToken = answer.status === "success" && typeof token === "string" && new TextEncoder().encode(token).length <= FRAME.tokenMaxBytes;
+      return this.sendAnswer(answer.status, {}, okToken ? { verification_token: token } : {});
+    }
     // 표에 없는 종류는 받을 키를 모르므로 종류별 키를 하나도 보내지 않음(서버도 버림)
     const allowed = ANSWER_KEYS[String(this.captcha?.c.meta?.kind)] ?? [];
     const out: Obj = {};
@@ -524,6 +567,12 @@ export class Session {
       c, final: this.finishSent, assets: new Map(), assetDeadlineUs: now + CAPTCHA.assetWaitUs, ttlDeadlineUs: now + c.ttl_ms * 1000,
       delivered: false, answered: false,
     };
+    if (c.frame_url !== undefined) {
+      if (!frameUrlOk(c.frame_url)) return this.sendAnswer("frame_error", {});
+      this.captcha.frameUrl = c.frame_url;
+      this.captcha.frameDeadlineUs = now + FRAME.loadWaitUs;
+      return this.deliverCaptcha();
+    }
     const metaAssets: Obj[] = Array.isArray(c.meta?.assets) ? c.meta.assets : [];
     const bad = c.asset_count > CAPTCHA.assets || c.asset_total_bytes > CAPTCHA.totalBytes || metaAssets.length !== c.asset_count
       || metaAssets.some((a) => !CAPTCHA_TYPES.has(a?.type));
@@ -556,7 +605,8 @@ export class Session {
     const cur = this.captcha!;
     const assets: CaptchaAsset[] = [];
     let total = 0;
-    for (const m of cur.c.meta.assets as Obj[]) {
+    // iframe 챌린지와 에셋 0개 챌린지는 meta 에 assets 가 없을 수 있음(TV74, TV86)
+    for (const m of (cur.c.meta?.assets ?? []) as Obj[]) {
       const p = cur.assets.get(m.index)!;
       const bytes = concat(Array.from({ length: p.count }, (_, i) => p.parts.get(i)!));
       total += bytes.length;
@@ -567,6 +617,7 @@ export class Session {
     cur.delivered = true;
     const c = cur.c;
     const out: CaptchaChallenge = { challengeId: c.challenge_id, challengeNo: c.challenge_no, windowId: c.window_id, reason: c.reason, ttlMs: c.ttl_ms, meta: c.meta, assets, final: cur.final };
+    if (cur.frameUrl !== undefined) out.frameUrl = cur.frameUrl;
     for (const cb of this.captchaCbs) cb(out);
   }
 
@@ -574,11 +625,12 @@ export class Session {
     const cur = this.captcha;
     if (!cur || cur.answered) return;
     const now = this.now();
-    if (!cur.delivered && now >= cur.assetDeadlineUs) this.sendAnswer("asset_error", {});
+    if (cur.frameDeadlineUs !== undefined && now >= cur.frameDeadlineUs) this.sendAnswer("frame_error", {});
+    else if (!cur.delivered && now >= cur.assetDeadlineUs) this.sendAnswer("asset_error", {});
     else if (cur.delivered && now >= cur.ttlDeadlineUs) this.sendAnswer("timeout", {});
   }
 
-  private sendAnswer(status: string, answer: Obj): void {
+  private sendAnswer(status: string, answer: Obj, extra: Obj = {}): void {
     const cur = this.captcha;
     if (!cur || cur.answered || this.state === "ended") return;
     // 챌린지 화면 행동(CAPTCHA_VIEW 등)이 답보다 먼저 서버에 들어가게 남은 이벤트를 먼저 보냄
@@ -586,7 +638,7 @@ export class Session {
     cur.answered = true;
     this.sendTracked(encodeFrame({
       header: header("CONTROL", this.nextSeq++, this.now()),
-      control: { subtype: "CAPTCHA_ANSWER", challenge_id: cur.c.challenge_id, status, answer },
+      control: { subtype: "CAPTCHA_ANSWER", challenge_id: cur.c.challenge_id, status, answer, ...extra },
     }));
   }
 
@@ -674,6 +726,18 @@ export class Session {
   private now(): number {
     return Math.max(0, Math.round(this.opts.clock.now()));
   }
+}
+
+/** 절대 URL 이고 https 이거나, 개발용 127.0.0.1, localhost 의 http. UTF-8 1,024B 이하 */
+function frameUrlOk(u: unknown): boolean {
+  if (typeof u !== "string" || new TextEncoder().encode(u).length > FRAME.urlMaxBytes) return false;
+  let url: URL;
+  try {
+    url = new URL(u);
+  } catch {
+    return false;
+  }
+  return url.protocol === "https:" || (url.protocol === "http:" && (url.hostname === "127.0.0.1" || url.hostname === "localhost"));
 }
 
 function header(msgType: string, seq: number, tsUs: number): Obj {
