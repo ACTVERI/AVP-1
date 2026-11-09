@@ -646,7 +646,7 @@
    "session": {
     "challenge_open": true,
     "expect": "wait_for_challenge_result",
-    "server_e2e": "서버 e2e 로 확인: spikes/mock-server/tests/test_e2e.py::test_second_action_while_challenge_open_waits_and_gets_its_own_result",
+    "server_e2e": "서버 e2e 로 확인: actveri-server/mock/tests/test_e2e.py::test_second_action_while_challenge_open_waits_and_gets_its_own_result",
     "client_replay": "ts/test/session-v031.test.ts"
    }
   },
@@ -694,7 +694,7 @@
    "session": {
     "blocked": true,
     "expect": "state_blocked_again",
-    "server_e2e": "서버 e2e 로 확인: spikes/mock-server/tests/test_e2e.py::test_blocked_session_answers_every_later_action_with_blocked"
+    "server_e2e": "서버 e2e 로 확인: actveri-server/mock/tests/test_e2e.py::test_blocked_session_answers_every_later_action_with_blocked"
    }
   },
   {
@@ -724,7 +724,7 @@
    "session": {
     "challenge_closed": true,
     "expect": "ignore",
-    "server_e2e": "서버 e2e 로 확인: spikes/mock-server/tests/test_e2e.py::test_resent_answer_and_unknown_id_are_ignored",
+    "server_e2e": "서버 e2e 로 확인: actveri-server/mock/tests/test_e2e.py::test_resent_answer_and_unknown_id_are_ignored",
     "client_replay": "ts/test/session-v031.test.ts"
    }
   },
@@ -755,7 +755,7 @@
    "session": {
     "known_id": false,
     "expect": "ignore",
-    "server_e2e": "서버 e2e 로 확인: spikes/mock-server/tests/test_e2e.py::test_resent_answer_and_unknown_id_are_ignored"
+    "server_e2e": "서버 e2e 로 확인: actveri-server/mock/tests/test_e2e.py::test_resent_answer_and_unknown_id_are_ignored"
    }
   },
   {
@@ -785,7 +785,7 @@
    "session": {
     "expired": true,
     "expect": "ignore",
-    "server_e2e": "서버 e2e 로 확인: spikes/mock-server/tests/test_modes.py::test_server_side_expiry_blocks_pending_action",
+    "server_e2e": "서버 e2e 로 확인: actveri-server/mock/tests/test_modes.py::test_server_side_expiry_blocks_pending_action",
     "client_replay": "ts/test/session-v031.test.ts"
    }
   },
@@ -815,7 +815,7 @@
    "session": {
     "finish_sent": true,
     "expect": "E_STATE",
-    "server_e2e": "서버 e2e 로 확인: spikes/mock-server/tests/test_e2e.py::test_second_finish_is_e_state",
+    "server_e2e": "서버 e2e 로 확인: actveri-server/mock/tests/test_e2e.py::test_second_finish_is_e_state",
     "client_replay": "ts/test/session-v031.test.ts"
    }
   },

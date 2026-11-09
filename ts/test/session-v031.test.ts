@@ -249,7 +249,7 @@ describe("A19 세션 규칙 벡터 TV67~TV72", () => {
 
   it("세션 규칙 벡터는 TV67~TV72 이고 모두 서버 e2e 출처가 있음", () => {
     expect(sessionVectors.map((v) => v.id)).toEqual(["TV67", "TV68", "TV69", "TV70", "TV71", "TV72"]);
-    for (const v of sessionVectors) expect(v.session.server_e2e, v.id).toMatch(/^서버 e2e 로 확인: spikes\/mock-server\/tests\/test_\w+\.py::test_\w+$/);
+    for (const v of sessionVectors) expect(v.session.server_e2e, v.id).toMatch(/^서버 e2e 로 확인: actveri-server\/mock\/tests\/test_\w+\.py::test_\w+$/);
   });
 
   it("client_replay 를 적은 벡터와 재생 시험이 있는 벡터가 같음", () => {

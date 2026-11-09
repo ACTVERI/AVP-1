@@ -1,14 +1,14 @@
 # AVP/1 프로토콜 명세 v0.3.1 (S(t) LAB)
 
-AVP/1(Action Verification Protocol)은 S(t) LAB 클라이언트와 S(t) 통합 판별 서버가 WebSocket 바이너리 프레임으로 행동 이벤트, 판별 점수, 상태와 제어 메시지를 주고받는 애플리케이션 규격입니다. v0.2는 대선님 ML 입출력 스펙 v0.1(`actveri-docs/ml-io-spec-v0.1.md`)을 기준으로 다시 짰고, 입력은 그 스펙의 이벤트와 필드, 출력은 `ai_score` 하나입니다. 구조는 팀 합의 문서 `actveri-docs/st-lab-summary.md` 를 따르고, 2026-11-09 해커톤에서 2명이 5시간 안에 만들 범위를 항목마다 MVP 또는 나중으로 표시합니다.
+AVP/1(Action Verification Protocol)은 S(t) LAB 클라이언트와 S(t) 통합 판별 서버가 WebSocket 바이너리 프레임으로 행동 이벤트, 판별 점수, 상태와 제어 메시지를 주고받는 애플리케이션 규격입니다. v0.2는 팀의 ML 입출력 스펙 v0.1을 기준으로 다시 짰고, 입력은 그 스펙의 이벤트와 필드, 출력은 `ai_score` 하나입니다. 구조는 팀 합의 문서를 따르고, 해커톤에서 2명이 5시간 안에 만들 범위를 항목마다 MVP 또는 나중으로 표시합니다.
 
-v0.3은 v0.2 위에 판단 시점(보호할 행동), 차단 상태, 캡챠 답의 궤적 요약을 더했습니다. v0.3.1은 2026-11-09 새벽 검토 4건(코드 검토 2건, 독립 공격 검토, 차등 퍼징)의 지적을 반영한 고침판이고, 위협 모델은 "클라이언트와 페이지는 믿지 않는다"입니다. 바뀐 곳은 바로 아래 표에 있고, 기존 필드의 뜻과 크기는 바꾸지 않아 헤더 Version은 그대로 1입니다. v0.3.1에서 더한 필드(`STATE` 선택 묶음)는 v0.3 디코더가 끝 바이트로 무시하던 자리라 HELLO `proto_minor` 는 3 그대로 둡니다. v0.3 문서는 `avp1-protocol-v0.3.md`, v0.2 문서는 `avp1-protocol-v0.2.md` 로 남깁니다.
+v0.3은 v0.2 위에 판단 시점(보호할 행동), 차단 상태, 캡챠 답의 궤적 요약을 더했습니다. v0.3.1은 검토 4건(코드 검토 2건, 독립 공격 검토, 차등 퍼징)의 지적을 반영한 고침판이고, 위협 모델은 "클라이언트와 페이지는 믿지 않는다"입니다. 바뀐 곳은 바로 아래 표에 있고, 기존 필드의 뜻과 크기는 바꾸지 않아 헤더 Version은 그대로 1입니다. v0.3.1에서 더한 필드(`STATE` 선택 묶음)는 v0.3 디코더가 끝 바이트로 무시하던 자리라 HELLO `proto_minor` 는 3 그대로 둡니다. 버전별 변경 기록은 레포 최상위 `CHANGELOG.md` 에 있습니다.
 
-v0.1(`avp1-protocol-v0.1.md`)과 그 검토 결과(`actveri-docs/review-avp1-v0.1.md`)는 바이너리 골격의 근거로만 씁니다. 이 문서와 v0.1이 다르면 이 문서가 맞습니다.
+v0.1(`avp1-protocol-v0.1.md`)과 그 검토 결과는 바이너리 골격의 근거로만 씁니다. 이 문서와 v0.1이 다르면 이 문서가 맞습니다.
 
 ## v0.3에서 바뀐 점 (v0.3.1)
 
-에이전트는 페이지 JS 를 실행할 수 있고, CDP 로 입력 시각을 바꿀 수 있고, 프로토콜 메시지를 직접 만들 수 있다고 봅니다. 그래서 판단과 집행은 서버에 두고, 클라이언트가 만든 값(궤적 요약, 오류 보고, 시각)은 근거가 아니라 대조용으로만 씁니다. 근거가 없거나 오류가 나면 통과가 아니라 캡챠나 차단으로 닫고, 보호 행동 하나에는 결과 `STATE` 가 반드시 하나 나갑니다. 번호는 `actveri-docs/v0.3.1-plan.md` 의 A 번호입니다.
+에이전트는 페이지 JS 를 실행할 수 있고, CDP 로 입력 시각을 바꿀 수 있고, 프로토콜 메시지를 직접 만들 수 있다고 봅니다. 그래서 판단과 집행은 서버에 두고, 클라이언트가 만든 값(궤적 요약, 오류 보고, 시각)은 근거가 아니라 대조용으로만 씁니다. 근거가 없거나 오류가 나면 통과가 아니라 캡챠나 차단으로 닫고, 보호 행동 하나에는 결과 `STATE` 가 반드시 하나 나갑니다. A 번호는 v0.3.1 고침 항목 번호이고, 본문도 같은 번호로 가리킵니다.
 
 | 번호 | v0.3 | v0.3.1 | 이유 |
 |---|---|---|---|
@@ -38,7 +38,7 @@ v0.1(`avp1-protocol-v0.1.md`)과 그 검토 결과(`actveri-docs/review-avp1-v0.
 | 퍼징 N1, N3 | 최소 길이가 아닌 varint, 이벤트 flags 예약 비트 처리를 적지 않음 | 둘 다 받는다고 적음(예약 비트는 무시) | 앞으로 확장 |
 | A12, A13 문장 | 오류 표 `E_STATE` 행은 `FINAL` 로 발동한 챌린지만, `E_CLIENT_KEY` 행은 `k` 불일치만 적음 | `E_STATE` 행에 FINISH 때 열려 있던 챌린지도, `E_CLIENT_KEY` 행에 `k` 가 없음도 적음 | 본문과 오류 표가 달랐음 |
 | `FINAL` 근거 부족 | 판단 표는 캡챠(`FINAL` 이면 사유 1), FINISH 순서 6번은 `STATE`(ENDED, `insufficient_data`)로 두 문장이 다름 | 판단 표를 FINISH 순서 6번에 맞춰 `FINAL` 에서 행동 이벤트가 모자라면 캡챠 없이 ENDED(`insufficient_data`) | `FINAL` 은 세션 끝 알림이고 보호 행동 판단은 행동 시점에 이미 끝남. 가짜 서버도 이렇게 동작 |
-| 캡챠 통과 뒤 `clock_suspect`(조정자 결정) | 캡챠를 통과한 세션은 근거 부족이면 통과라 `clock_suspect` 도 통과 | `clock_suspect` 면 근거 부족 통과로 보지 않고 캡챠를 한 번 더, 그 캡챠를 통과한 뒤 또 `clock_suspect` 면 `BLOCKED`(`insufficient_data`) | 캡챠를 한 번 통과한 뒤 시각을 조작해 근거를 지우면 그대로 통과했음 |
+| 캡챠 통과 뒤 `clock_suspect` | 캡챠를 통과한 세션은 근거 부족이면 통과라 `clock_suspect` 도 통과 | `clock_suspect` 면 근거 부족 통과로 보지 않고 캡챠를 한 번 더, 그 캡챠를 통과한 뒤 또 `clock_suspect` 면 `BLOCKED`(`insufficient_data`) | 캡챠를 한 번 통과한 뒤 시각을 조작해 근거를 지우면 그대로 통과했음 |
 
 결정 대기 4건(CAPTCHA 서버가 죽었을 때, 기준값 숫자, 캡챠 통과 뒤 재판단, 판단 점수 범위)은 정하지 않은 항목 26~29에 가안으로만 적었습니다.
 
@@ -46,16 +46,16 @@ v0.1(`avp1-protocol-v0.1.md`)과 그 검토 결과(`actveri-docs/review-avp1-v0.
 
 | 바뀐 점 | v0.2 | v0.3 | 이유 |
 |---|---|---|---|
-| 판단 시점 | 윈도우 점수가 `T` 이상으로 10초 이어지거나 `FINAL` 점수가 `T` 이상이면 캡챠 | 보호할 행동(구매, 송금, 제출) 이벤트 `PROTECTED_ACTION` 을 받은 순간 그때까지의 근거로 판단. 10초 지속은 WELCOME `captcha_trigger` 로 고르는 선택 모드, 기본은 보호 행동 | AI는 짧게 일하고 나가서 지속을 기다리면 늦음(대선님 11/9 0:40). 보호 행동은 AI도 피할 수 없음 |
+| 판단 시점 | 윈도우 점수가 `T` 이상으로 10초 이어지거나 `FINAL` 점수가 `T` 이상이면 캡챠 | 보호할 행동(구매, 송금, 제출) 이벤트 `PROTECTED_ACTION` 을 받은 순간 그때까지의 근거로 판단. 10초 지속은 WELCOME `captcha_trigger` 로 고르는 선택 모드, 기본은 보호 행동 | AI는 짧게 일하고 나가서 지속을 기다리면 늦음. 보호 행동은 AI도 피할 수 없음 |
 | 기준값 | `captcha_threshold_milli` 하나 | `captcha_threshold_milli`(τ_captcha)와 `block_threshold_milli`(τ_block) 2단계 | 캡챠를 차단보다 낮은 기준에서 먼저 걺. 숫자는 가안(`actveri-docs/captcha-trigger-formula.md`) |
 | 서버 상태 | 6개, 차단 없음 | `STATE` 7 `BLOCKED`, 사유 `block_after_captcha_fail`, `block_above_threshold`, 통과 알림 `action_allowed` | 판단 결과를 앱이 받아 보호 행동을 막거나 진행해야 함 |
 | 캡챠 실패 | 다시 유지 시간을 채우면 세션당 3번까지 재발동 | 다시 띄우지 않고 `BLOCKED` | 같은 문제를 여러 번 풀게 하면 에이전트가 답을 고쳐 냄 |
-| 캡챠 통과 뒤 | 다시 발동하지 않음 | 판단 점수가 τ_block 이상일 때만 `BLOCKED` | "캡챠를 통과하면 정말 높을 때만 차단"(대선님) |
+| 캡챠 통과 뒤 | 다시 발동하지 않음 | 판단 점수가 τ_block 이상일 때만 `BLOCKED` | 캡챠를 통과하면 점수가 정말 높을 때만 차단 |
 | FINISH 뒤 DATA | 오류 표는 `E_STATE`, 클라이언트 표는 FINAL 챌린지 행동을 보낸다고 해 서로 부딪힘 | `FINAL` 로 발동한 챌린지가 열려 있는 동안만 허용, 그 밖은 `E_STATE` | 가짜 서버가 먼저 이렇게 동작했고 부딪힘이 풀림 |
-| `CAPTCHA_ANSWER` 본문 | `answer` 모양 없음 | 캡챠 화면 궤적 요약 `trajectory` 필드 목록, 단위, 크기, 금지 항목 | 캡챠 화면(`spikes/captcha-ui`)이 요약을 만들어 싣기로 함 |
+| `CAPTCHA_ANSWER` 본문 | `answer` 모양 없음 | 캡챠 화면 궤적 요약 `trajectory` 필드 목록, 단위, 크기, 금지 항목 | 캡챠 화면(`actveri-web/captcha-ui`)이 요약을 만들어 싣기로 함 |
 | 코덱이 알려 주는 것 | 없음 | 오류별 닫기 코드 표, CONTROL 끝 남는 바이트 위치 `trailing_offset`, ERROR `message` 256바이트 글자 경계 자르기 | 가짜 서버 어댑터가 따로 가지던 것을 정본으로 옮김 |
 | 경로 | 규격 `/avp/1/ws`, 가짜 서버 `/avp` | 모두 `/avp/1/ws` | 앱 설정이 서버마다 달라지지 않게 |
-| 규격 안 엇갈림 | `RUN_LABEL` 이 CONTROL MVP 줄과 "선택"에 함께, 서버 기록 모드, 불확실 구간, 기준값 정하는 사람, `client_key` 뜻 | `RUN_LABEL` 은 선택, 서버 기록은 나중(세션 파일은 앱이 저장), 불확실 구간 문장을 2단계 규칙으로, 기준값은 함께 정하는 가안, `client_key` 는 데모 사이트 구분용 | 11/9 정합성 점검 |
+| 규격 안 엇갈림 | `RUN_LABEL` 이 CONTROL MVP 줄과 "선택"에 함께, 서버 기록 모드, 불확실 구간, 기준값 정하는 사람, `client_key` 뜻 | `RUN_LABEL` 은 선택, 서버 기록은 나중(세션 파일은 앱이 저장), 불확실 구간 문장을 2단계 규칙으로, 기준값은 함께 정하는 가안, `client_key` 는 데모 사이트 구분용 | 규격 정합성 점검 |
 
 ## 개념
 
@@ -71,20 +71,20 @@ S(t) LAB은 Electron 앱 안의 Chromium 화면(`WebContentsView`)에서 사람�
 
 - AVP/1 바이너리 형식은 전송 형식이고, 판별 정확도를 높인다고 주장하지 않습니다. JSON 대비 전송량, 지연, CPU는 측정 전이고, 측정 방법은 JSON 기준선 벤치마크 절에 적었습니다.
 - 바이너리 프레임의 무결성은 사람임을 증명하지 않습니다. 클라이언트가 보낸 이벤트는 위조될 수 있고, 이 규격은 암호화나 호출자 인증을 대신하지 않습니다(TLS는 WSS가 맡음).
-- 2026-11-08 기준 사람과 AI를 실제로 구별한 성능 측정은 없습니다. 외부 사이트 1곳과 자체 미션 1개에서 나온 결과를 다른 사이트나 에이전트로 일반화하지 않습니다.
+- 현재 사람과 AI를 실제로 구별한 성능 측정은 없습니다. 외부 사이트 1곳과 자체 미션 1개에서 나온 결과를 다른 사이트나 에이전트로 일반화하지 않습니다.
 
 ## v0.1에서 바뀐 점
 
 | 바뀐 점 | v0.1 | v0.2 | 이유 |
 |---|---|---|---|
-| 기준 | 우리가 정한 S(t) 엔진과 판정 토큰 | 대선님 ML 입출력 스펙의 이벤트 목록과 `ai_score` | 대선님 결정(11/8 23:5x). 대응표 절에서 스펙 필드마다 위치를 확인 |
+| 기준 | 우리가 정한 S(t) 엔진과 판정 토큰 | ML 입출력 스펙의 이벤트 목록과 `ai_score` | 판별 모델의 입출력에 맞추기로 정함. 대응표 절에서 스펙 필드마다 위치를 확인 |
 | 서버가 보내는 출력 | 판정 토큰만, 점수는 사이트 백엔드 검증 API로 | 서버가 클라이언트에 `INFERENCE_RESULT`, `MODEL_INPUT`, `STATE`, CAPTCHA 중계 메시지를 바이너리로 보냄 | 팀 합의 문서의 양방향 요구와 관측성 요구. 토큰과 검증 API는 운영 단계 부록으로 옮김 |
 | 클라이언트 | 고객사 페이지의 브라우저 SDK | Electron 앱(수집기는 페이지 안, Protocol Client는 Electron 안) | 팀 합의 문서. 브라우저 SDK는 나중 배포 형태로 부록에 남김 |
 | 이벤트 등록표 | 9종(KEY 하나로 down과 up) | 스펙 이벤트 전부에 코드 배정, 범위별 묶음, MVP 15종(CAPTCHA를 만들면 `CAPTCHA_VIEW` 를 더해 16종) | 스펙의 P0는 MVP, P1과 P2는 코드와 바이트 배치만 정함 |
 | 순서와 식별자 | 프레임 순서 번호만 | 프레임 번호, 이벤트 번호(`event_seq`), 윈도우 번호(`window_id`), ACK의 CRC32 | 스펙 2.1의 열린 질문(이벤트 단위 누락)과 대시보드 연결 요구 |
 | 상태와 재연결 | DB 저장 뒤 ACK, RESUME, beacon | 메모리 버퍼에 넣은 뒤 ACK, 재연결은 새 세션 | 팀 합의 문서(Redis와 DB 없음). RESUME과 beacon은 운영 단계 부록 |
 | CONTROL 본문 | UTF-8 JSON | 고정 바이너리 레이아웃. 사이트마다 다른 변화 파라미터와 챌린지 메타데이터만 길이 붙은 JSON 문자열 | 스펙 원칙 1("JSON을 단순히 바이너리로 바꾸지 않음") |
-| 화면 변화 | 모든 세션에 지시 | 자체 미션 세션에만, HELLO가 지원 여부를 밝힘 | 외부 사이트에는 변화를 넣을 수 없음(주인님 11/9 결정) |
+| 화면 변화 | 모든 세션에 지시 | 자체 미션 세션에만, HELLO가 지원 여부를 밝힘 | 외부 사이트에는 변화를 넣을 수 없음 |
 
 검토 결과 28개 항목의 반영 여부는 검토 반영표 절에 있습니다.
 
@@ -92,17 +92,17 @@ S(t) LAB은 Electron 앱 안의 Chromium 화면(`WebContentsView`)에서 사람�
 
 ### 구성 요소
 
-| 구성 요소 | 하는 일 | 어디서 도는지 | 담당 |
+| 구성 요소 | 하는 일 | 어디서 도는지 | 맡은 쪽 |
 |---|---|---|---|
-| S(t) Collector | 페이지 안에서 DOM 이벤트를 듣고, 민감 필드를 거르고, 절대 시각과 함께 원시 이벤트를 넘김. 자체 미션에서는 화면 변화 적용과 그려진 시각 측정 | `WebContentsView` 의 preload 스크립트(contextIsolation 켬) | 성빈 |
-| Protocol Client | 원시 이벤트를 세션 시각으로 바꾸고 `event_seq` 와 대상 번호를 매김, AVP/1 인코딩, 50ms 묶음 전송, ACK 처리, 서버 메시지 디코드, TX/RX 바이트 탭 | Electron main 프로세스(Node 전역 `WebSocket`, 2026-11-09 스파이크에서 동작 확인) | 성빈 |
-| React Dashboard | Raw Events, Binary Protocol, Model Inference 패널. 탭으로 받은 실제 바이트와 디코드 결과만 그림 | Electron 대시보드 렌더러 | 성빈 |
-| S(t) 통합 판별 서버 | WebSocket 세션, 디코드와 검증, 세션 메모리 버퍼, 윈도우, 특징 추출, 추론, 결과 송신, CAPTCHA 발동 정책과 중계, 자체 미션 화면 변화 지시 | FastAPI, uvicorn 프로세스 1개 | 대선님(서버 기본, 모델), 성빈(디코더) |
+| S(t) Collector | 페이지 안에서 DOM 이벤트를 듣고, 민감 필드를 거르고, 절대 시각과 함께 원시 이벤트를 넘김. 자체 미션에서는 화면 변화 적용과 그려진 시각 측정 | `WebContentsView` 의 preload 스크립트(contextIsolation 켬) | 클라이언트 담당 |
+| Protocol Client | 원시 이벤트를 세션 시각으로 바꾸고 `event_seq` 와 대상 번호를 매김, AVP/1 인코딩, 50ms 묶음 전송, ACK 처리, 서버 메시지 디코드, TX/RX 바이트 탭 | Electron main 프로세스(Node 전역 `WebSocket`, 시험 구현에서 동작 확인) | 클라이언트 담당 |
+| React Dashboard | Raw Events, Binary Protocol, Model Inference 패널. 탭으로 받은 실제 바이트와 디코드 결과만 그림 | Electron 대시보드 렌더러 | 클라이언트 담당 |
+| S(t) 통합 판별 서버 | WebSocket 세션, 디코드와 검증, 세션 메모리 버퍼, 윈도우, 특징 추출, 추론, 결과 송신, CAPTCHA 발동 정책과 중계, 자체 미션 화면 변화 지시 | FastAPI, uvicorn 프로세스 1개 | 모델 담당(서버 기본, 모델), 클라이언트 담당(디코더) |
 | CAPTCHA 서버 | 문제 선택, 메타데이터(정답 제외), 에셋, 답 검증. 자체 인증과 권한 검사는 없음 | FastAPI, 별도 프로세스, 판별 서버만 내부망에서 호출 | 여유 있으면 |
 
-수집기와 Protocol Client 사이는 Electron IPC(구조화 복제)이고 AVP/1이 아닙니다. 판별 서버와 CAPTCHA 서버 사이는 내부 HTTP JSON이고 역시 AVP/1이 아닙니다. 판별 서버가 외부에서 받는 연결은 AVP/1 WebSocket 하나뿐이라, 앱은 CAPTCHA 서버에 직접 닿지 못하고 문제, 에셋, 답, 결과가 모두 AVP/1로 중계됩니다(대선님 11/9 확정).
+수집기와 Protocol Client 사이는 Electron IPC(구조화 복제)이고 AVP/1이 아닙니다. 판별 서버와 CAPTCHA 서버 사이는 내부 HTTP JSON이고 역시 AVP/1이 아닙니다. 판별 서버가 외부에서 받는 연결은 AVP/1 WebSocket 하나뿐이라, 앱은 CAPTCHA 서버에 직접 닿지 못하고 문제, 에셋, 답, 결과가 모두 AVP/1로 중계됩니다.
 
-### 연결 구조 (대선님 11/9 확정, 외부 공개 방식만 미정)
+### 연결 구조 (외부 공개 방식만 미정)
 
 ```mermaid
 flowchart LR
@@ -126,7 +126,7 @@ flowchart LR
 
 에이전트(Claude Code와 agent-browser, Playwright)는 CDP로 왼쪽 `WebContentsView` 페이지만 조작합니다. Protocol Client가 main 프로세스에 있어서 `INFERENCE_RESULT`, `MODEL_INPUT`, CAPTCHA 중계 프레임은 그 페이지를 거치지 않고, 에이전트가 붙은 페이지에서는 이 WebSocket 프레임이 보이지 않습니다. v0.1이 "판정을 브라우저에 보내면 에이전트가 읽는다"며 막았던 문제는 이 배치로 풀리고, 운영 단계 부록의 브라우저 SDK 배포에서만 다시 생깁니다.
 
-조건이 2가지 남습니다. 앱의 `remote-debugging-port` 로는 대시보드 뷰도 CDP 대상(`type: page`)으로 보이므로, 에이전트 실행 도구는 URL로 실험 페이지 대상 하나에만 붙어야 합니다(스파이크는 `mission.html`, `stock.naver.com` URL로 골랐음). 창 전체 화면 캡처로 대시보드 점수를 볼 수 있는 경우는 정하지 않은 항목에 남겼습니다.
+조건이 2가지 남습니다. 앱의 `remote-debugging-port` 로는 대시보드 뷰도 CDP 대상(`type: page`)으로 보이므로, 에이전트 실행 도구는 URL로 실험 페이지 대상 하나에만 붙어야 합니다(데모 실행기는 `shop-mission/index.html`, `stock.naver.com` URL로 고름). 창 전체 화면 캡처로 대시보드 점수를 볼 수 있는 경우는 정하지 않은 항목에 남겼습니다.
 
 ### 대안
 
@@ -135,25 +135,25 @@ flowchart LR
 | A (채택) | Protocol Client가 Electron main에 있고 판별 서버에만 붙음. CAPTCHA 서버는 판별 서버 뒤 | 페이지를 새로 열어도 WebSocket이 끊기지 않음. 팀 합의 문서 구조와 같음 | main과 렌더러 사이 IPC가 하나 더 생김 |
 | B | Protocol Client가 대시보드 렌더러에 있음 | 브라우저 WebSocket API와 같은 코드를 그대로 씀 | 대시보드를 다시 불러오면 세션이 끊김 |
 | C | Protocol Client가 페이지 안(preload)에 있음 | 나중의 브라우저 SDK 배포와 같은 모양 | 외부 사이트에서 페이지를 옮길 때마다 연결이 끊겨 새 세션이 됨 |
-| D | 클라이언트가 CAPTCHA 서버에도 직접 붙음 | 챌린지 화면을 CAPTCHA 서버가 바로 줌 | CAPTCHA 서버가 외부에 열리고 인증을 새로 만들어야 함. 대선님이 11/9 쓰지 않기로 정함 |
+| D | 클라이언트가 CAPTCHA 서버에도 직접 붙음 | 챌린지 화면을 CAPTCHA 서버가 바로 줌 | CAPTCHA 서버가 외부에 열리고 인증을 새로 만들어야 함. 쓰지 않기로 정함 |
 
-### 서버 배치 (가안, 대선님 결정)
+### 서버 배치 (가안)
 
-서버는 AWS가 아니라 대선님 온프레미스 장비 1대에서 두 FastAPI 프로세스로 돕니다. 판별 서버는 8000번, CAPTCHA 서버는 127.0.0.1의 8100번에만 열고, 외부에는 TLS 종단 하나가 `wss://<공인 호스트>/avp/1/ws` 만 내보냅니다.
+서버는 AWS가 아니라 팀 온프레미스 장비 1대에서 두 FastAPI 프로세스로 돕니다. 판별 서버는 8000번, CAPTCHA 서버는 127.0.0.1의 8100번에만 열고, 외부에는 TLS 종단 하나가 `wss://<공인 호스트>/avp/1/ws` 만 내보냅니다.
 
 | 공개 방식 | 필요한 것 | 주의할 점 |
 |---|---|---|
 | Caddy + 공인 도메인 | 도메인, 공유기나 방화벽의 443 포트 포워딩, Let's Encrypt 자동 인증서 | 사내망이나 가정망에서 포트를 열 수 있어야 함 |
-| Cloudflare Tunnel | Cloudflare 계정과 도메인, 서버에서 `cloudflared` 실행(바깥으로 나가는 연결만 씀) | Cloudflare 문서 기준 WebSocket 유휴 연결을 100초 뒤 끊음(당일 확인). AVP/1은 15초마다 빈 DATA를 보내 이 한도 안에 둠 |
+| Cloudflare Tunnel | Cloudflare 계정과 도메인, 서버에서 `cloudflared` 실행(바깥으로 나가는 연결만 씀) | Cloudflare 문서 기준 WebSocket 유휴 연결을 100초 뒤 끊음. AVP/1은 15초마다 빈 DATA를 보내 이 한도 안에 둠 |
 | 로컬 개발 | `ws://127.0.0.1:8000/avp/1/ws` | TLS 없이 같은 장비에서만 |
 
 uvicorn은 기본값으로 20초마다 WebSocket ping을 보냅니다. 빈 DATA keepalive(15초)와 ping 가운데 하나만 살아 있어도 프록시 유휴 한도에 걸리지 않습니다.
 
-### CAPTCHA 서버 내부 API (가안, 대선님 결정)
+### CAPTCHA 서버 내부 API (가안)
 
 AVP/1 밖의 서버 간 JSON입니다. 판별 서버만 바깥으로 부르고, CAPTCHA 서버는 자체 인증이 없는 대신 127.0.0.1(또는 내부망)에만 열어 앱과 외부에서 닿지 않게 합니다. `Origin` 과 `Host` 헤더는 인증으로 쓰지 않습니다.
 
-팀 합의 문서의 서버 간 API Key는 대선님 11/9 확정(CAPTCHA 서버 인증 없음)에 따라 MVP에서 빼고, 같은 장비 밖으로 옮길 때 다시 붙입니다.
+팀 합의 문서의 서버 간 API Key는 CAPTCHA 서버를 인증 없이 두기로 정해 MVP에서 빼고, 같은 장비 밖으로 옮길 때 다시 붙입니다.
 
 ```http
 POST /internal/v1/challenges
@@ -310,9 +310,9 @@ DATA 페이로드는 이벤트를 `type(u8) + length(uvar) + payload(length 바�
 
 인코더는 프레임 안 이벤트를 `t_us` 오름차순으로 안정 정렬하므로 프레임 안 `dt` 는 0 이상입니다. 디코더는 음수 `dt` 도 받되 서버 통계에 순서 위반으로 셉니다. 프레임 사이에는 뒤 프레임 이벤트가 앞 프레임 마지막 이벤트보다 이를 수 있고, 서버는 도착 순서가 아니라 `t_us` 로 정렬합니다.
 
-프로세스와 페이지마다 `timeOrigin` 기준이 조금씩 달라, 다른 프로세스의 시각을 빼면 수 ms 어긋납니다(스파이크에서 preload와 main 사이 편도가 -1.08~+2.72ms로 음수까지 나옴). 같은 페이지 이벤트끼리의 간격은 영향이 없고, 페이지와 `t0` 사이에 상수 차이만 생깁니다. 이 오차는 5시간 범위에서 보정하지 않고, 서버가 `t_recv` 와 비교해 2초 넘게 벌어지면 세션에 `clock_suspect` 를 표시합니다(검토 28번).
+프로세스와 페이지마다 `timeOrigin` 기준이 조금씩 달라, 다른 프로세스의 시각을 빼면 수 ms 어긋납니다(시험 구현에서 preload와 main 사이 편도가 -1.08~+2.72ms로 음수까지 나옴). 같은 페이지 이벤트끼리의 간격은 영향이 없고, 페이지와 `t0` 사이에 상수 차이만 생깁니다. 이 오차는 5시간 범위에서 보정하지 않고, 서버가 `t_recv` 와 비교해 2초 넘게 벌어지면 세션에 `clock_suspect` 를 표시합니다(검토 28번).
 
-v0.3.1(A9, A16)에서 `clock_suspect` 는 아래 가운데 하나면 섭니다. 한 번 서면 세션 끝까지 남고, 그 세션의 보호 행동 판단은 근거 부족과 같게 처리합니다(캡챠). 캡챠를 통과한 세션의 근거 부족은 통과지만 `clock_suspect` 는 예외로, 캡챠를 한 번 더 띄우고 그 캡챠까지 통과한 뒤 또 `clock_suspect` 인 판단은 `BLOCKED`(`insufficient_data`)입니다(조정자 결정). 캡챠를 한 번 통과한 뒤 시각을 조작해 근거를 지우는 길을 막기 위해서입니다. CDP 로 입력 시각을 바꾸거나 메시지를 직접 만들어 판단 범위를 줄이려는 시도를 근거로 받지 않기 위해서입니다.
+v0.3.1(A9, A16)에서 `clock_suspect` 는 아래 가운데 하나면 섭니다. 한 번 서면 세션 끝까지 남고, 그 세션의 보호 행동 판단은 근거 부족과 같게 처리합니다(캡챠). 캡챠를 통과한 세션의 근거 부족은 통과지만 `clock_suspect` 는 예외로, 캡챠를 한 번 더 띄우고 그 캡챠까지 통과한 뒤 또 `clock_suspect` 인 판단은 `BLOCKED`(`insufficient_data`)입니다. 캡챠를 한 번 통과한 뒤 시각을 조작해 근거를 지우는 길을 막기 위해서입니다. CDP 로 입력 시각을 바꾸거나 메시지를 직접 만들어 판단 범위를 줄이려는 시도를 근거로 받지 않기 위해서입니다.
 
 - DATA 헤더 Timestamp 와 그 프레임의 `t_recv` 차이가 2초를 넘음
 - 이벤트 시각이 0보다 작거나, 서버 세션 시각 + 2초보다 큼(아직 오지 않은 시각)
@@ -409,7 +409,7 @@ S(t) 칸은 U(t) UI 상태, A(t) 외부 행동, ΔU(t) UI 변화, ΔA(t) 변화 
 | `0x11` | `KEY_UP` | P0 | `KEY_DOWN` 과 같음 | MVP | A |
 | `0x12` | `COMPOSITION_START` | P1 | `target uvar` | 나중 | A |
 | `0x13` | `COMPOSITION_END` | P1 | `target uvar` | 나중 | A |
-| `0x14` | `INPUT` | P1에서 MVP로(대선님 11/9 결정) | `source u8`, `target uvar`, `input_type u8`, `text_length_delta svar`, `flags u8`(비트0 `trusted`) | MVP | A |
+| `0x14` | `INPUT` | P1에서 MVP로 | `source u8`, `target uvar`, `input_type u8`, `text_length_delta svar`, `flags u8`(비트0 `trusted`) | MVP | A |
 | `0x15` | `SELECTION_CHANGE` | P1 | `source u8`, `target uvar`, `selected_length uvar` | 나중 | A |
 | `0x20` | `WHEEL` | P0 | `wheel_dx svar`(100배), `wheel_dy svar`(100배), `wheel_delta_mode u8`, `target uvar` | MVP | A |
 | `0x21` | `SCROLL_POSITION` | P1 | `container uvar`(0은 문서), `scroll_x svar`, `scroll_y svar` | 나중 | U |
@@ -444,13 +444,13 @@ S(t) 칸은 U(t) UI 상태, A(t) 외부 행동, ΔU(t) UI 변화, ΔA(t) 변화 
 | `0x50` | `CHECKPOINT` | 추가(무결성) | `event_seq uvar`, `flags u8`, `x svar`, `y svar`, `scroll_y uvar`, `anchor uvar` | MVP | U |
 | `0x51` | `VIEWPORT_CHANGE` | P0(`viewport_width/height` 변경 시점), P1(`device_pixel_ratio`) | `viewport_width uvar`, `viewport_height uvar`, `dpr_milli uvar` | MVP | U |
 | `0x52` | `COLLECTION_LOSS` | P1(`collection_loss_count`) | `reason u8`, `count uvar` | MVP | 품질 |
-| `0x60` | `UI_CHANGE_RENDERED` | P2에서 P0으로(대선님 확인 필요) | `anchor uvar`, `apply_lag_us uvar`, `visible_pct u8` | MVP(자체 미션만) | ΔU |
-| `0x61` | `UI_CHANGE_FAILED` | P2에서 P0으로(대선님 확인 필요) | `anchor uvar`, `reason u8` | MVP(자체 미션만) | ΔU |
+| `0x60` | `UI_CHANGE_RENDERED` | P2에서 P0으로(모델 담당 확인 필요) | `anchor uvar`, `apply_lag_us uvar`, `visible_pct u8` | MVP(자체 미션만) | ΔU |
+| `0x61` | `UI_CHANGE_FAILED` | P2에서 P0으로(모델 담당 확인 필요) | `anchor uvar`, `reason u8` | MVP(자체 미션만) | ΔU |
 | `0x62` | `CAPTCHA_VIEW` | 추가(챌린지 맥락) | `phase u8`(1 shown, 2 closed), `challenge_no uvar`, `view_x svar`, `view_y svar`, `view_w uvar`, `view_h uvar` | MVP(CAPTCHA를 만들면) | ΔU, C |
 | `0x70` | `TASK_SUCCESS` | P1(메타데이터) | `source u8`, `task uvar` | 나중. 추론 입력 금지 | 없음 |
 | `0x71` | `TASK_FAILURE` | P1(메타데이터) | `source u8`, `task uvar` | 나중. 추론 입력 금지 | 없음 |
 
-`UNEXPECTED_UI_CHANGE` 는 스펙에서 P2이지만 v0.2는 `UI_CHANGE_RENDERED` 와 `UI_CHANGE_FAILED` 로 나눠 P0으로 둡니다. "그냥 300ms 멈춤"과 "UI가 바뀐 직후 300ms 멈춤"을 데이터에서 구별하려면 변화가 그려진 시각이 있어야 하고, 이 이벤트가 없으면 ΔU와 ΔA를 계산할 수 없기 때문입니다. 대선님 확인 필요 항목이고, 외부 사이트 세션에는 이 이벤트가 없어도 점수가 나오게 정했습니다(상태 앵커 절).
+`UNEXPECTED_UI_CHANGE` 는 스펙에서 P2이지만 v0.2는 `UI_CHANGE_RENDERED` 와 `UI_CHANGE_FAILED` 로 나눠 P0으로 둡니다. "그냥 300ms 멈춤"과 "UI가 바뀐 직후 300ms 멈춤"을 데이터에서 구별하려면 변화가 그려진 시각이 있어야 하고, 이 이벤트가 없으면 ΔU와 ΔA를 계산할 수 없기 때문입니다. 모델 담당 확인이 필요한 항목이고, 외부 사이트 세션에는 이 이벤트가 없어도 점수가 나오게 정했습니다(상태 앵커 절).
 
 `source` 바이트가 없는 이벤트는 수집 출처가 정해져 있습니다. 포인터, 키, 휠, 스크롤, 터치, 조합 입력, 문서와 창 상태 이벤트는 `dom`, `CHECKPOINT`, `TARGET_INFO`, `VIEWPORT_CHANGE`, `COLLECTION_LOSS`, `UI_CHANGE_*`, `CAPTCHA_VIEW` 는 `sdk`, `PROTECTED_ACTION` 은 `site`(미션 페이지 계측 호출, 외부 사이트에서는 실험 설정이 정한 버튼 누름을 앱이 대신 보고) 입니다.
 
@@ -514,7 +514,7 @@ S(t) 칸은 U(t) UI 상태, A(t) 외부 행동, ΔU(t) UI 변화, ΔA(t) 변화 
 - `CHECKPOINT` 가 포인터 위치 모름이면, 그 프레임의 첫 이동 앞에 이동 위치를 절대 좌표로 담은 `CHECKPOINT` 를 같은 시각으로 하나 더 넣고 그 이동은 `dx=0, dy=0` 으로 보냅니다.
 - 이동이 이어지는 동안 `pointer_type` 은 프레임 첫 `CHECKPOINT` 의 비트3~4를 따르고, 바뀌면 새 `CHECKPOINT` 를 넣습니다.
 - 선택 필드 `pressure` 는 0.0~1.0을 0~255로 반올림, `tilt_x`, `tilt_y` 는 도 단위 정수입니다.
-- `trusted` 비트는 사람의 근거가 아닙니다. Playwright가 CDP로 넣은 입력도 `isTrusted` 가 참이었고(스파이크), 이 비트와 `navigator.webdriver` 는 자동화 흔적 기준선 입력으로만 씁니다.
+- `trusted` 비트는 사람의 근거가 아닙니다. Playwright가 CDP로 넣은 입력도 `isTrusted` 가 참이었고(시험 구현에서 확인), 이 비트와 `navigator.webdriver` 는 자동화 흔적 기준선 입력으로만 씁니다.
 - 화면 배율이 150%면 `clientX` 가 `267.75` 같은 소수로 옵니다. `Math.round` 로 반올림하고, HELLO `dpr_milli` 는 1,500입니다.
 
 ### INPUT 규칙 (MVP)
@@ -528,11 +528,11 @@ S(t) 칸은 U(t) UI 상태, A(t) 외부 행동, ΔU(t) UI 변화, ΔA(t) 변화 
 
 ### S(t) 파생 특징 예시
 
-선로에는 원시 이벤트만 싣고 특징은 서버가 만듭니다(스펙 원칙 2). 아래는 MVP 이벤트로 계산할 수 있는 예시이고, 실제로 쓸지와 기준값은 대선님이 정합니다.
+선로에는 원시 이벤트만 싣고 특징은 서버가 만듭니다(스펙 원칙 2). 아래는 MVP 이벤트로 계산할 수 있는 예시이고, 실제로 쓸지와 기준값은 모델 담당이 정합니다.
 
 | 특징 | 계산 | 쓰는 이벤트 |
 |---|---|---|
-| 키 없는 값 변경(`keyless_input`) | 같은 `target` 에 `INPUT` 직전 N ms(가안 1,000) 안에 `KEY_DOWN` 이 없는 `INPUT` 의 수와 비율. 입력이 필요한 미션에서 키 입력이 하나도 없으면 강한 신호(대선님 11/9) | `INPUT`, `KEY_DOWN` |
+| 키 없는 값 변경(`keyless_input`) | 같은 `target` 에 `INPUT` 직전 N ms(가안 1,000) 안에 `KEY_DOWN` 이 없는 `INPUT` 의 수와 비율. 입력이 필요한 미션에서 키 입력이 하나도 없으면 강한 신호 | `INPUT`, `KEY_DOWN` |
 | 누름 직전 이동 | `POINTER_DOWN` 직전 500ms 안 `POINTER_MOVE` 수 | `POINTER_MOVE`, `POINTER_DOWN` |
 | 누름 유지 시간 | 같은 버튼의 `POINTER_UP` 시각에서 `POINTER_DOWN` 시각을 뺀 값 | `POINTER_DOWN`, `POINTER_UP` |
 | 변화 뒤 첫 행동 지연(자체 미션) | `UI_CHANGE_RENDERED` 의 `t_ui` 부터 첫 행동 이벤트까지 | `UI_CHANGE_RENDERED`, 행동 이벤트 |
@@ -546,7 +546,7 @@ S(t) 칸은 U(t) UI 상태, A(t) 외부 행동, ΔU(t) UI 변화, ΔA(t) 변화 
 화면 변화는 자체 미션 세션에만 있습니다. 외부 사이트(1곳)는 페이지를 우리가 바꿀 수 없어 수동 수집만 하고, 서버는 그 세션에 `CHANGE_ORDER` 를 보내지 않습니다.
 
 - HELLO의 `run_flags` 비트2 `change_orders_supported` 가 1이고 `mission_kind` 가 `custom_mission` 일 때만 서버가 변화를 계획합니다. 둘 중 하나라도 아니면 WELCOME `server_flags` 비트3이 0이고, 그 세션의 `anchor` 는 끝까지 0입니다.
-- 윈도우, 특징, `INFERENCE_RESULT`, CAPTCHA 정책은 앵커 없이 동작해야 합니다. 앵커가 0뿐인 세션에서는 ΔU와 ΔA 특징이 비어 있고, 모델이 이를 어떻게 다룰지는 대선님이 정합니다.
+- 윈도우, 특징, `INFERENCE_RESULT`, CAPTCHA 정책은 앵커 없이 동작해야 합니다. 앵커가 0뿐인 세션에서는 ΔU와 ΔA 특징이 비어 있고, 모델이 이를 어떻게 다룰지는 모델 담당이 정합니다.
 - 외부 사이트 세션의 점수와 자체 미션 세션의 점수를 같은 기준으로 비교한다고 주장하지 않습니다. 같은 모델에 들어가는 특징 묶음이 다릅니다.
 
 ### 계획과 지시 (MVP)
@@ -604,7 +604,7 @@ stateDiagram-v2
 
 `blocked` 에서 서버는 DATA를 받아 버퍼에 넣고 ACK하지만, 주기 추론 결과로 상태를 바꾸지 않고 판단과 캡챠도 하지 않습니다. 이 상태에서 `PROTECTED_ACTION` 이 오면 판단 없이 `STATE`(BLOCKED, 처음 차단 사유, 그 행동의 `action_event_seq`)를 다시 보냅니다(v0.3.1, A13, TV38, TV68). 클라이언트가 FINISH를 보내면 기록용 `FINAL` 결과(근거가 모자라면 생략)와 `STATE`(ENDED)를 보내고 닫습니다.
 
-`closed` 가 되면 서버는 세션 메모리를 비웁니다. MVP 서버는 세션 기록을 파일로 남기지 않습니다. 학습용 세션 기록은 Electron 앱이 보낸 프레임 원본, 정답 라벨, 받은 점수를 세션 파일로 저장합니다(11/9 0:38 결정, 라벨 절). 서버가 받은 프레임 원본을 남기는 서버 기록 모드는 나중입니다.
+`closed` 가 되면 서버는 세션 메모리를 비웁니다. MVP 서버는 세션 기록을 파일로 남기지 않습니다. 학습용 세션 기록은 Electron 앱이 보낸 프레임 원본, 정답 라벨, 받은 점수를 세션 파일로 저장합니다(라벨 절). 서버가 받은 프레임 원본을 남기는 서버 기록 모드는 나중입니다.
 
 ### 클라이언트 상태
 
@@ -644,7 +644,7 @@ ACK의 Sequence는 상대가 보낸 프레임 가운데 빠짐없이 받은 마�
 
 WebSocket은 `wss://<호스트>/avp/1/ws?k=<client_key>` 로, 서브프로토콜 `avp.1` 을 요청해 엽니다. 서버는 응답에 `avp.1` 을 돌려주고, 연결 뒤 5초 안에 HELLO가 오지 않으면 `E_HELLO_REQUIRED` 로 닫습니다.
 
-세션과 환경 정보(스펙 2.7)는 HELLO에 한 번만 싣고, 바뀌면 `VIEWPORT_CHANGE` 로 보냅니다. Electron 앱이라 `Origin` 은 의미가 없습니다. `client_key` 는 앱에 들어 있는 공개 값이라 인증이 아니고, 어느 데모 사이트(실험)의 세션인지 구분하는 데만 씁니다. 서버는 URL `k` 가 없거나(v0.3.1, A12), URL `k` 와 HELLO `client_key` 가 다르거나, 허용 목록을 둔 서버에서 목록에 없으면 `E_CLIENT_KEY` 로 닫습니다(대선님 11/9: 판별 서버는 인증 없이 누구나 붙음).
+세션과 환경 정보(스펙 2.7)는 HELLO에 한 번만 싣고, 바뀌면 `VIEWPORT_CHANGE` 로 보냅니다. Electron 앱이라 `Origin` 은 의미가 없습니다. `client_key` 는 앱에 들어 있는 공개 값이라 인증이 아니고, 어느 데모 사이트(실험)의 세션인지 구분하는 데만 씁니다. 서버는 URL `k` 가 없거나(v0.3.1, A12), URL `k` 와 HELLO `client_key` 가 다르거나, 허용 목록을 둔 서버에서 목록에 없으면 `E_CLIENT_KEY` 로 닫습니다(판별 서버는 인증 없이 누구나 붙음).
 
 HELLO `sdk_version`, `client_key`, `mission_id` 는 각 UTF-8 128B 이하이고, 넘으면 디코더가 `E_CONTROL_TOO_LARGE` 입니다(v0.3.1, A16, TV73). 서버는 이 문자열을 로그에 쓸 때 줄바꿈과 제어 글자가 그대로 나가지 않게 `repr` 모양으로 씁니다.
 
@@ -669,16 +669,16 @@ HELLO `sdk_version`, `client_key`, `mission_id` 는 각 UTF-8 128B 이하이고,
 
 ## 서버가 보내는 결과
 
-### 윈도우와 추론 주기 (가안, 대선님 확인 전)
+### 윈도우와 추론 주기 (가안, 모델 담당 확인 전)
 
-행동 DATA는 클라이언트에서 50ms 묶음으로 계속 들어오고, 서버는 1초마다 최근 10초 이벤트로 윈도우를 다시 만들어 추론합니다. 값은 2026-11-09 주기 실험(연습 레포 `exp/cadence` 브랜치 `bench/cadence/RESULT.md`, 합성 스트림)의 권장값입니다. 윈도우 길이, 주기, 최소 행동 수, CAPTCHA 기준, 유지 시간은 모두 WELCOME으로 알려서, 바꿀 때 프로토콜을 고치지 않습니다.
+행동 DATA는 클라이언트에서 50ms 묶음으로 계속 들어오고, 서버는 1초마다 최근 10초 이벤트로 윈도우를 다시 만들어 추론합니다. 값은 합성 스트림으로 돌린 주기 실험의 권장값입니다. 윈도우 길이, 주기, 최소 행동 수, CAPTCHA 기준, 유지 시간은 모두 WELCOME으로 알려서, 바꿀 때 프로토콜을 고치지 않습니다.
 
 - 윈도우는 시각 기준 슬라이딩 구간입니다. 추론 시점에 버퍼에 있는 가장 늦은 이벤트 시각을 끝(`window_end_ms`)으로 두고 `window_ms`(가안 10,000)만큼 앞을 시작으로 둡니다. 시작이 0보다 작으면 0이고, `시작 < t <= 끝` 인 이벤트가 들어갑니다.
 - 행동 이벤트는 `POINTER_DOWN`, `KEY_DOWN`, `WHEEL` 입니다. 윈도우 안 행동 이벤트가 `min_action_events`(가안 3) 미만이면 점수를 내지 않고 `INFERENCE_RESULT` 도 보내지 않습니다. 첫 점수 전까지 상태는 `WARMING_UP`(대시보드 표시 "수집 중")입니다.
 - 추론은 `infer_interval_ms`(가안 1,000)마다 합니다. 앞 추론 뒤 새 이벤트가 없으면 같은 결과를 다시 보내지 않습니다(가안).
 - 점수를 낼 때마다 `window_id` 를 1씩 늘려 `INFERENCE_RESULT` 를 보냅니다. Model Inference 패널은 이 메시지와 확장 블록으로 1초마다 갱신됩니다.
 - `FINISH` 를 받으면 마지막 윈도우가 아니라 세션 전체 이벤트로 1번 계산해 `FINAL` 플래그를 켠 `INFERENCE_RESULT` 를 보냅니다. 실험에서 세션 전체가 10초 윈도우 하나보다 근거가 많았기 때문입니다(90초 에이전트 세션의 행동 이벤트 중앙값 51개, 10초 윈도우 중앙값 3개).
-- 포인터 이벤트가 하나도 없는 세션은 사람으로 보지 않고 `insufficient_data` 로 끝냅니다. `el.click()`, `page.fill()` 처럼 DOM을 직접 건드리는 자동화는 수집기에 이벤트를 남기지 않아(스파이크 확인), 이벤트가 없다는 사실이 사람의 근거가 될 수 없습니다.
+- 포인터 이벤트가 하나도 없는 세션은 사람으로 보지 않고 `insufficient_data` 로 끝냅니다. `el.click()`, `page.fill()` 처럼 DOM을 직접 건드리는 자동화는 수집기에 이벤트를 남기지 않아(시험 구현에서 확인), 이벤트가 없다는 사실이 사람의 근거가 될 수 없습니다.
 - 모델 추론과 특징 계산은 이벤트 루프를 막지 않게 별도 실행기(`run_in_executor` 또는 프로세스 풀)에서 돌리고, 세션마다 대기 중인 추론은 1개만 둡니다. 추론이 1초를 넘으면 `infer_interval_ms` 를 2,000으로 올립니다.
 
 이 실험은 합성 스트림으로 윈도우 안 이벤트 수, 첫 점수까지 시간, 통신량, 규칙 구조를 본 것이고 판별 성능은 알려 주지 않습니다. 실제 사람과 에이전트 세션이 생기면 최소 행동 수와 기준, 유지 시간을 사람 오탐률로 다시 정합니다.
@@ -769,7 +769,7 @@ Model Inference 패널에 모델 이름, 추론 시간, 윈도우 크기, 입력
 
 ### 판단 시점과 캡챠, 차단 (판별 서버, 기준값 가안)
 
-v0.1 브리프의 "POC 프론트 토글"은 쓰지 않고, 팀 합의 문서대로 판별 서버가 정책을 가집니다. 기준값은 WELCOME의 `captcha_threshold_milli`(τ_captcha), `block_threshold_milli`(τ_block), 발동 방식은 `captcha_trigger`, 지속 모드의 유지 시간은 `captcha_sustain_ms` 로 알립니다. 숫자는 주인님과 대선님이 함께 정하고, 지금 값(τ_captcha 0.80, τ_block 0.90)은 가안입니다(`actveri-docs/captcha-trigger-formula.md`).
+v0.1 브리프의 "POC 프론트 토글"은 쓰지 않고, 팀 합의 문서대로 판별 서버가 정책을 가집니다. 기준값은 WELCOME의 `captcha_threshold_milli`(τ_captcha), `block_threshold_milli`(τ_block), 발동 방식은 `captcha_trigger`, 지속 모드의 유지 시간은 `captcha_sustain_ms` 로 알립니다. 숫자는 클라이언트 담당과 모델 담당이 함께 정하고, 지금 값(τ_captcha 0.80, τ_block 0.90)은 가안입니다(`actveri-docs/captcha-trigger-formula.md`).
 
 점수는 1초마다 계산해 화면에 보여 주고, 판단은 지켜야 할 행동을 하는 순간 한 번 합니다. AI가 일을 빨리 끝내도 그 행동은 해야 하므로 판단을 피할 수 없습니다.
 
@@ -781,7 +781,7 @@ v0.1 브리프의 "POC 프론트 토글"은 쓰지 않고, 팀 합의 문서대�
 |---|---|
 | 이미 `BLOCKED` | 판단하지 않고 `STATE`(BLOCKED)를 다시 보냄 |
 | 챌린지가 열려 있음(모든 모드, A8) | 그 챌린지의 결과를 기다려 이 판단에도 씀(실패면 차단, 통과면 아래 '캡챠 통과 뒤' 줄). 챌린지의 판단 점수는 걸린 판단 점수 가운데 가장 높은 값(A7) |
-| 캡챠를 통과한 적 있음 | 점수 ≥ τ_block 이면 `BLOCKED`(`block_above_threshold`), 아니면 통과. 근거 부족이면 통과. 단 `clock_suspect` 는 근거 부족 통과로 보지 않고 캡챠를 한 번 더 띄우고(사유 3), 그 캡챠까지 통과한 뒤 또 `clock_suspect` 인 판단은 `BLOCKED`(`insufficient_data`)(조정자 결정) |
+| 캡챠를 통과한 적 있음 | 점수 ≥ τ_block 이면 `BLOCKED`(`block_above_threshold`), 아니면 통과. 근거 부족이면 통과. 단 `clock_suspect` 는 근거 부족 통과로 보지 않고 캡챠를 한 번 더 띄우고(사유 3), 그 캡챠까지 통과한 뒤 또 `clock_suspect` 인 판단은 `BLOCKED`(`insufficient_data`) |
 | 근거 부족이고 τ_captcha > 0 | 캡챠(사유 3). 점수 없음(A2). `FINAL` 에서 행동 이벤트가 모자라면 캡챠 없이 `STATE`(ENDED, `insufficient_data`)(FINISH 순서 6번) |
 | 근거 부족이고 τ_captcha = 0 | `BLOCKED`(`insufficient_data`). `FINAL` 은 위 줄과 같이 ENDED |
 | τ_captcha > 0 이고 점수 ≥ τ_captcha | 캡챠(`CAPTCHA_CHALLENGE` 사유 3 `action_above_threshold`, `FINAL` 이면 1) |
@@ -806,7 +806,7 @@ v0.1 브리프의 "POC 프론트 토글"은 쓰지 않고, 팀 합의 문서대�
 
 연속 윈도우 개수(예: 3개)로 세지 않는 이유는 윈도우가 겹치기 때문입니다. 10초 윈도우를 1초마다 만들면 클릭 하나가 윈도우 10개에 들어가, 실험에서 "연속 3개" 규칙은 사람 세션 55%를 촉발했고 "10초 유지" 규칙은 5%였습니다(합성 스트림, 임시 점수).
 
-### CAPTCHA 중계 (가안, 대선님 11/9 구조 확정)
+### CAPTCHA 중계 (가안, 구조는 확정)
 
 판별 서버가 외부에서 받는 연결은 AVP/1 하나뿐이고 CAPTCHA 서버는 앱에서 닿지 않습니다. 그래서 문제, 에셋, 답, 결과를 모두 판별 서버가 AVP/1로 중계하고, 정답은 CAPTCHA 서버 밖으로 나오지 않습니다.
 
@@ -847,7 +847,7 @@ sequenceDiagram
 클라이언트가 보낸 `answer` 의 문제별 키와 `trajectory` 요약은 앱에서 지어낼 수 있어서 판정 근거로 쓰지 않고 대조용으로만 씁니다. 판정 근거는 판별 서버가 같은 세션 DATA 로 받은 챌린지 화면 포인터 이벤트입니다.
 
 1. 구간: 그 챌린지 번호의 `CAPTCHA_VIEW`(shown)부터 답을 받은 순간까지(closed 는 결과 뒤에 오므로) 받은 `POINTER_MOVE`, `POINTER_DOWN`, `POINTER_UP`. 좌표는 챌린지 화면 뷰포트 CSS 픽셀입니다.
-2. 궤적 요약: 캡챠 화면의 `summarizeTrajectory`(`spikes/captcha-ui/trajectory.js`)와 같은 계산을 서버 쪽에서 합니다. 점은 첫 `POINTER_DOWN` 600ms 앞부터 마지막 `POINTER_UP` 까지(그 앞 마지막 점 하나를 창 시작 시각으로 붙임)이고, 화면 쪽이 잡기 직전 다가오는 손을 넣는 방식과 같습니다.
+2. 궤적 요약: 캡챠 화면의 `summarizeTrajectory`(`actveri-web/captcha-ui/trajectory.js`)와 같은 계산을 서버 쪽에서 합니다. 점은 첫 `POINTER_DOWN` 600ms 앞부터 마지막 `POINTER_UP` 까지(그 앞 마지막 점 하나를 창 시작 시각으로 붙임)이고, 화면 쪽이 잡기 직전 다가오는 손을 넣는 방식과 같습니다.
 3. 도달 여부(`guide_sol`): 서버가 `meta.seed` 로 문제(빛길 꼭짓점, 둥지 자리)를 다시 만들고, 첫 `POINTER_DOWN` 이 솔 처음 자리 가까이, 마지막 `POINTER_UP` 이 둥지 가까이 있는지 봅니다. 문제 좌표(832×420)와 화면 좌표는 `CAPTCHA_VIEW` 의 `view_w`, `view_h` 로 맞춥니다. 따라서 `guide_sol` 챌린지 화면은 놀이판이 챌린지 화면 뷰포트 전체를 차지해야 합니다(가안). 둥지가 열린 박자는 페이지 시계를 서버가 모르므로 보지 않습니다.
 4. `fail` 조건: 구간 포인터 이벤트가 없음, 도달하지 않음, 서버 요약이 사람 손 기준(캡챠 화면 `judgeTrajectory` 와 같은 계산)에 못 미침, 클라이언트 `trajectory` 가 있는데 서버 요약과 크게 다름(`durationMs` 차이가 500ms 와 서버 값의 25% 가운데 큰 쪽을 넘거나, `pathLengthPx` 차이가 60px 와 서버 값의 25% 가운데 큰 쪽을 넘음, 가안).
 5. 문제 시드는 서버가 정합니다. 클라이언트가 고른 시드로 그린 문제의 답은 서버가 다시 계산한 문제와 맞지 않아 `fail` 입니다.
@@ -857,7 +857,7 @@ sequenceDiagram
 챌린지를 푸는 행동도 S(t) 데이터라서 수집, 윈도우, 추론을 멈추지 않습니다. 챌린지 화면에도 같은 수집기를 넣고, 이벤트는 같은 세션에 같은 `event_seq` 로 이어 붙습니다.
 
 - 챌린지 화면의 좌표는 그 화면의 뷰포트 기준입니다. `CAPTCHA_VIEW` 가 그 화면의 위치와 크기(앱 창 기준 CSS 픽셀)를 실어, 서버가 실험 페이지 좌표와 구별합니다.
-- `CAPTCHA_VIEW` shown과 closed 사이 이벤트는 챌린지 맥락입니다. 서버가 이 구간을 같은 윈도우에 섞을지 따로 모델링할지는 대선님이 정합니다.
+- `CAPTCHA_VIEW` shown과 closed 사이 이벤트는 챌린지 맥락입니다. 서버가 이 구간을 같은 윈도우에 섞을지 따로 모델링할지는 모델 담당이 정합니다.
 - 챌린지 화면 요소도 `TARGET_INFO` 로 대상 번호를 받습니다. 사전 `av_key` 는 0입니다.
 - `CAPTCHA_RESULT` 의 통과와 실패는 정책용 결과이고 추론 입력이 아닙니다. 정답 라벨과 같은 이유로 모델에 넣지 않습니다.
 
@@ -1052,7 +1052,7 @@ ERROR `message` 의 256B는 글자 수가 아니라 UTF-8 바이트 수입니다
 | `elapsed_ms` | 정수, ms | 선택. 챌린지 화면을 그린 때(`CAPTCHA_VIEW` shown)부터 답할 때까지 |
 | `trajectory` | 객체 | 선택. 챌린지 화면 포인터 궤적 요약. 아래 필드만 |
 
-`trajectory` 는 캡챠 화면(`spikes/captcha-ui/trajectory.js` 의 `summarizeTrajectory`)이 만든 요약을 키 이름 그대로 싣습니다. v0.3.1부터 판정에는 쓰지 않고 서버 재계산 값과 대조만 합니다. 좌표는 챌린지 화면 뷰포트 CSS 픽셀, 시각은 그 화면의 `performance.now()` 기준이고, 포인터 이벤트 간격이 기기마다 달라 20ms 간격으로 다시 뽑은 뒤 계산합니다.
+`trajectory` 는 캡챠 화면(`actveri-web/captcha-ui/trajectory.js` 의 `summarizeTrajectory`)이 만든 요약을 키 이름 그대로 싣습니다. v0.3.1부터 판정에는 쓰지 않고 서버 재계산 값과 대조만 합니다. 좌표는 챌린지 화면 뷰포트 CSS 픽셀, 시각은 그 화면의 `performance.now()` 기준이고, 포인터 이벤트 간격이 기기마다 달라 20ms 간격으로 다시 뽑은 뒤 계산합니다.
 
 | 필드 | 형식 | 단위와 뜻 |
 |---|---|---|
@@ -1107,7 +1107,7 @@ ERROR `message` 의 256B는 글자 수가 아니라 UTF-8 바이트 수입니다
 - MVP 앱은 라벨을 기록 파일에만 두고 `RUN_LABEL` 을 보내지 않아도 됩니다. 서버에 학습 데이터를 모아야 할 때만 보냅니다.
 - 서버는 `RUN_LABEL` 을 세션 메타데이터 저장소에만 두고, 윈도우, 특징, 추론, CAPTCHA 정책 코드는 이 저장소를 읽지 않습니다. 코드에서는 판별 모듈에 메타데이터 객체를 넘기지 않는 것으로 지킵니다.
 - 실험 중 전환을 바꾸면 `RUN_LABEL` 을 다시 보내고, 서버는 `set_at_ms` 와 함께 모두 남깁니다.
-- `input_path` 도 사실상 라벨입니다(2와 3은 에이전트). 입력 경로마다 남는 이벤트가 달라서 기록이 필요합니다. CDP Input은 `isTrusted` 가 사람과 같이 참이고, DOM 직접 조작은 수집기에 이벤트를 거의 남기지 않습니다(2026-11-09 Electron 스파이크).
+- `input_path` 도 사실상 라벨입니다(2와 3은 에이전트). 입력 경로마다 남는 이벤트가 달라서 기록이 필요합니다. CDP Input은 `isTrusted` 가 사람과 같이 참이고, DOM 직접 조작은 수집기에 이벤트를 거의 남기지 않습니다(Electron 시험 구현에서 확인).
 
 ## 오류와 검사 순서
 
@@ -1228,12 +1228,12 @@ Binary Protocol 패널의 "JSON(기준) KB/s"와 절감률은 앱이 직접 잽�
 
 ## 골든 테스트 벡터
 
-TS와 Python 코덱은 모든 벡터를 양쪽으로 통과해야 합니다. JSON에서 인코딩한 바이트가 hex와 같아야 하고, hex를 디코딩한 결과가 JSON과 같아야 합니다. 벡터는 2026-11-09에 Python 3 참조 스크립트로 인코딩하고 다시 디코딩해 일치를 확인했고, 스크립트는 지웠습니다.
+TS와 Python 코덱은 모든 벡터를 양쪽으로 통과해야 합니다. JSON에서 인코딩한 바이트가 hex와 같아야 하고, hex를 디코딩한 결과가 JSON과 같아야 합니다. 벡터는 Python 3 참조 스크립트로 인코딩하고 다시 디코딩해 일치를 확인했고, 스크립트는 지웠습니다.
 
 - 방향 표시: "클라이언트 발신"은 TS 인코더가 만들고 Python 디코더가 읽는 프레임, "서버 발신"은 Python 인코더가 만들고 TS 디코더가 읽는 프레임입니다. 시험은 두 코덱 모두 인코드와 디코드를 다 돌립니다.
 - 비교 규칙: JSON은 파싱한 값끼리 비교합니다. `ai_score` 같은 f32는 양쪽을 f32로 반올림(`Math.fround`, `struct.pack('<f')`)한 뒤 비교하고, 비트 hex도 함께 확인합니다.
 - 디코드 JSON의 `x`, `y`(이동 누적), `applied_at_us` 는 디코더가 계산한 값이고 인코더 입력에서는 무시합니다.
-- 벡터에 나오지 않는 모양은 아래로 정합니다(연습 저장소 v0.2 구현에서 정함). `target`, `av_key`, `target_av` 가 0이면 `null`, `route`, `require_route` 가 0이면 `null`, 홀수 경로 번호나 사전 밖 번호는 선로 값 그대로 숫자. 값 표에 없는 enum은 숫자. 페이로드가 빈 클라이언트 ACK는 `ack` 키가 없음. 모르는 CONTROL subtype은 `{"subtype":<숫자>,"body_hex":"..."}` 이고 `E_SUBTYPE` 판단은 세션이 함. `STATE` 는 `{"state":{"state":"SCORING","reason":"none","window_id":3}}`, ERROR는 `code` 를 오류 이름(`E_STATE`)으로, `fatal` 을 불리언으로 둠.
+- 벡터에 나오지 않는 모양은 아래로 정합니다(v0.2 구현에서 정함). `target`, `av_key`, `target_av` 가 0이면 `null`, `route`, `require_route` 가 0이면 `null`, 홀수 경로 번호나 사전 밖 번호는 선로 값 그대로 숫자. 값 표에 없는 enum은 숫자. 페이로드가 빈 클라이언트 ACK는 `ack` 키가 없음. 모르는 CONTROL subtype은 `{"subtype":<숫자>,"body_hex":"..."}` 이고 `E_SUBTYPE` 판단은 세션이 함. `STATE` 는 `{"state":{"state":"SCORING","reason":"none","window_id":3}}`, ERROR는 `code` 를 오류 이름(`E_STATE`)으로, `fatal` 을 불리언으로 둠.
 - 프레임 중간 `CHECKPOINT` 의 `event_seq` 는 그 자리 번호(첫 `CHECKPOINT` 번호 + 순번)와 같아야 합니다. 인코더는 다르면 `E_ENCODE` 로 거절하고, 디코더는 그 필드 값을 그대로 보이되 다른 이벤트 번호는 첫 `CHECKPOINT` 기준으로 셉니다.
 - `str` 의 UTF-8 오류와 NUL은 CONTROL 밖(`ASSET_CHUNK` 의 `challenge_id`)에서도 `E_CONTROL_BODY` 입니다.
 - 본문의 `u64`(`t0_unix_us`, `server_open_unix_us`)는 헤더 Timestamp와 같은 이유로 2^53-1 이하여야 하고, 넘으면 `E_RANGE` 입니다.
@@ -1311,7 +1311,7 @@ TS와 Python 코덱은 모든 벡터를 양쪽으로 통과해야 합니다. JSO
 
 v0.3.1 벡터(TV36~TV73)도 코덱을 쓰지 않고 바이트를 손으로 이어 붙이는 스크립트로 만든 뒤 두 코덱이 같은 값을 내는지 확인했습니다. hex 와 JSON 은 `test-vectors/avp1-v0.3.1.json` 에 있습니다.
 
-v0.3 벡터의 hex와 JSON은 `test-vectors/avp1-v0.3.json` 에 있습니다. 2026-11-09에 두 코덱을 쓰지 않고 바이트를 손으로 이어 붙이는 스크립트로 hex를 만든 뒤 TS와 Python 코덱이 같은 값을 내는지 확인했고, 스크립트는 지웠습니다.
+v0.3 벡터의 hex와 JSON은 `test-vectors/avp1-v0.3.json` 에 있습니다. 두 코덱을 쓰지 않고 바이트를 손으로 이어 붙이는 스크립트로 hex를 만든 뒤 TS와 Python 코덱이 같은 값을 내는지 확인했고, 스크립트는 지웠습니다.
 
 ### TV1 HELLO (클라이언트 발신)
 
@@ -1668,7 +1668,7 @@ A0 08 D4 07 E8 07 05 00 01 8E 01 00 0C 64
   "channels":[{"name":"v","unit":"px/ms"},{"name":"a","unit":"px/ms2"},{"name":"dt","unit":"ms"},{"name":"dy","unit":"px"}]}}
 ```
 
-모델 이름, 특징, 채널은 형식 확인용 예시이고 실제 모델이 정해지면 대선님이 바꿉니다.
+모델 이름, 특징, 채널은 형식 확인용 예시이고 실제 모델이 정해지면 모델 담당이 바꿉니다.
 
 ### TV21 RUN_LABEL (클라이언트 발신)
 
@@ -1703,7 +1703,7 @@ A0 08 D4 07 E8 07 05 00 01 8E 01 00 0C 64
 
 ## ML 스펙 대응표
 
-대선님 ML 입출력 스펙 v0.1의 필드가 v0.2 어디에 있는지 적었습니다. "합침"과 "파생"은 아래 주의에 이유를 적었습니다.
+ML 입출력 스펙 v0.1의 필드가 v0.2 어디에 있는지 적었습니다. "합침"과 "파생"은 아래 주의에 이유를 적었습니다.
 
 | 스펙 위치 | 스펙 필드 | 우선순위 | AVP/1 v0.2 위치 | 범위 |
 |---|---|---|---|---|
@@ -1724,7 +1724,7 @@ A0 08 D4 07 E8 07 05 00 01 8E 01 00 0C 64
 | 2.3 | `repeat` | P1 | `KEY_*` `flags` 비트1 | MVP(필드 자리 있음) |
 | 2.3 | `modifier_flags` | P1 | `KEY_*` `modifier_flags` | MVP(필드 자리 있음) |
 | 2.3 | `COMPOSITION_START`, `COMPOSITION_END` | P1 | `0x12`, `0x13`, 조합 중 키는 `is_composing` | 나중 |
-| 2.3 | `input_type`, `text_length_delta` | P1 | `INPUT`(`0x14`) 필드 | MVP(대선님 11/9 결정으로 올림. 키 없는 값 변경을 잡으려면 필요) |
+| 2.3 | `input_type`, `text_length_delta` | P1 | `INPUT`(`0x14`) 필드 | MVP(키 없는 값 변경을 잡으려면 필요해 올림) |
 | 2.3 | `SELECTION_CHANGE` | P1 | `0x15`(합침) | 나중 |
 | 2.4 | `WHEEL`, `wheel_dx/dy`, `wheel_delta_mode` | P0 | `0x20`, 이동량 100배 정수 | MVP |
 | 2.4 | `SCROLL_POSITION`, `scroll_container_id` | P1 | `0x21`, `container` | 나중 |
@@ -1749,7 +1749,7 @@ A0 08 D4 07 E8 07 05 00 01 8E 01 00 0C 64
 | 2.6 | `PAGE_VISIBILITY` | P1 | `0x4A` | 나중 |
 | 2.6 | `TASK_START/END` | P1 | `0x4B`, `0x4C` | 나중 |
 | 2.6 | `TASK_SUCCESS/FAILURE` | P1 | `0x70`, `0x71`(메타데이터 범위, 추론 입력 금지) | 나중 |
-| 2.6 | `UNEXPECTED_UI_CHANGE` | P2 | `UI_CHANGE_RENDERED`(`0x60`), `UI_CHANGE_FAILED`(`0x61`), 서버 `CHANGE_ORDER`. P0으로 올림(대선님 확인 필요) | MVP(자체 미션만) |
+| 2.6 | `UNEXPECTED_UI_CHANGE` | P2 | `UI_CHANGE_RENDERED`(`0x60`), `UI_CHANGE_FAILED`(`0x61`), 서버 `CHANGE_ORDER`. P0으로 올림(모델 담당 확인 필요) | MVP(자체 미션만) |
 | 2.6 | `RETRY/CORRECTION` | P2 | `0x4D`, `0x4E`. 서버가 행동에서 파생할 수도 있음 | 나중 |
 | 2.7 | `session_id` | P0 | WELCOME `session_id`(서버 발급) | MVP |
 | 2.7 | `protocol_version` | P0 | 헤더 Version + HELLO `proto_minor` | MVP |
@@ -1777,7 +1777,7 @@ A0 08 D4 07 E8 07 05 00 01 8E 01 00 0C 64
 
 ### 그대로 옮기지 못한 항목
 
-- `TAB_FOCUS/BLUR`: 브라우저는 탭 전환과 창 최소화를 구별해 알려 주지 않습니다. 수집기는 `PAGE_VISIBILITY` 와 `WINDOW_FOCUS/BLUR` 만 확실히 잴 수 있어서, `TAB_*` 코드는 자리만 두고 서버가 둘의 조합으로 파생하는 안을 대선님께 확인받아야 합니다.
+- `TAB_FOCUS/BLUR`: 브라우저는 탭 전환과 창 최소화를 구별해 알려 주지 않습니다. 수집기는 `PAGE_VISIBILITY` 와 `WINDOW_FOCUS/BLUR` 만 확실히 잴 수 있어서, `TAB_*` 코드는 자리만 두고 서버가 둘의 조합으로 파생하는 안을 모델 담당에게 확인받아야 합니다.
 - `network_rtt`: 클라이언트가 잴 믿을 만한 값이 없어 선로 필드를 만들지 않았습니다. 서버 측정값을 세션 정보에 둡니다.
 - `INPUT_CHANGE` 와 `input_type`, `text_length_delta`, 그리고 `SELECTION_CHANGE` 와 `SELECTION` 은 같은 브라우저 이벤트에서 나와 각각 이벤트 하나로 합쳤습니다. 스펙 이름 둘이 코드 하나를 가리킵니다.
 - `pressure`, `tilt_x/y` 를 이동에 실으려면 앞 선택 묶음(`movement_x/y`)을 0으로라도 채워야 합니다. 선택 필드 규칙 때문입니다.
@@ -1819,7 +1819,7 @@ v0.1 독립 검토의 항목마다 v0.2에서 어떻게 했는지 적었습니�
 | 27 | 버전과 확장 규칙 | 반영. 메이저와 마이너, `caps`, 끝에 붙는 선택 필드 |
 | 28 | 낮음 묶음 | 반영: `clock_suspect` 2초, Sequence 상한 STOP, 범위 밖 enum 보존, 플래그보다 내용, `timer_resolution_us`. bfcache는 외부 사이트에서 새 문서로 다룸 |
 
-바꾸지 말아야 할 설계 가운데 "ACK는 DB 저장 완료"는 DB가 없는 구조라 "세션 버퍼에 넣은 뒤"로 바꿨습니다. "VERDICT에 라벨을 넣지 않음"은 점수를 클라이언트로 보내도록 바꿨는데, Protocol Client가 Electron main에 있어 에이전트가 조작하는 페이지에 점수가 닿지 않기 때문입니다(스파이크 확인). 브라우저 SDK 배포에서는 원래 규칙을 따르도록 운영 단계 부록에 남겼습니다.
+바꾸지 말아야 할 설계 가운데 "ACK는 DB 저장 완료"는 DB가 없는 구조라 "세션 버퍼에 넣은 뒤"로 바꿨습니다. "VERDICT에 라벨을 넣지 않음"은 점수를 클라이언트로 보내도록 바꿨는데, Protocol Client가 Electron main에 있어 에이전트가 조작하는 페이지에 점수가 닿지 않기 때문입니다(시험 구현에서 확인). 브라우저 SDK 배포에서는 원래 규칙을 따르도록 운영 단계 부록에 남겼습니다.
 
 나머지(서버만 세션 번호 발급, 방향별 번호, HELLO는 0번, 프레임마다 CHECKPOINT, ZigZag varint, 대상 번호만 싣기, 변화 계획은 서버에만, `t_ui` 노출 기준, 실패 따로 받기, trusted와 webdriver는 기준선 입력만, 엄격한 크기 검사)는 그대로입니다.
 
@@ -1827,35 +1827,35 @@ v0.1 독립 검토의 항목마다 v0.2에서 어떻게 했는지 적었습니�
 
 | 번호 | 항목 | 가안 | 누가 정함 |
 |---:|---|---|---|
-| 1 | 온프레미스 서버 외부 공개 방식과 도메인 | Cloudflare Tunnel(포트 개방 없이 됨). 안 되면 Caddy + 공인 도메인 | 대선님 |
-| 2 | `UNEXPECTED_UI_CHANGE` 를 P0으로 올림 | P0(`UI_CHANGE_RENDERED`, `UI_CHANGE_FAILED`) | 대선님 확인 |
-| 3 | 캡챠 기준 τ_captcha, 차단 기준 τ_block, 판단 시점 | 보호 행동과 `FINAL` 에서 판단. τ_captcha 이상이면 캡챠, 캡챠 실패면 차단, 캡챠 통과 뒤에는 τ_block 이상일 때만 차단, τ_captcha 미만은 통과. 숫자는 τ_captcha 0.80, τ_block 0.90 가안(선호 없이 계산하면 τ_block 0.50, τ_captcha 는 AI 캡챠 통과율 s 를 잰 뒤). 모두 WELCOME으로 알림 | 주인님, 대선님 함께 정함(지금은 가안) |
-| 4 | 윈도우 길이, 주기, 최소 행동 수 | 최근 10초를 1초마다, 행동 이벤트 3개부터 점수. 모두 WELCOME으로 알림(주기 실험 권장값) | 대선님 |
-| 5 | 앵커 없는 세션(외부 사이트)에서 ΔU 특징 처리 | 특징 값을 비우고 결측 표시 열을 둠 | 대선님 |
-| 6 | `RUN_LABEL`(라벨, 입력 경로)을 서버로 보낼지 | MVP는 보내지 않고 앱 기록 파일에만. 서버에 학습 데이터를 모을 때만 보냄 | 대선님 |
-| 7 | 에이전트가 대시보드 점수를 보는 경로(CDP로 대시보드 대상에 붙기, 창 전체 캡처) | 실행 도구가 실험 페이지 URL 대상 하나에만 붙고, 화면 캡처는 그 뷰만 씀 | 주인님 |
-| 8 | 휠 이동량 고정 소수점 배율 | 100배 | 대선님 |
-| 9 | CAPTCHA 내부 API 모양 | 문제 요청, 에셋 받기, 답 검증 3개 엔드포인트(내부 API 절) | 대선님 |
-| 10 | CAPTCHA 에셋 한도와 형식 | 합 512KiB, 조각 32KiB, PNG, JPEG, WebP만 | 대선님 |
-| 11 | CAPTCHA 서버 보호 | 인증 없이 127.0.0.1에만 열기. 다른 장비로 옮기면 서버 간 키 추가 | 대선님 |
-| 12 | 챌린지 화면 행동을 같은 윈도우에 섞을지 | `CAPTCHA_VIEW` 구간을 따로 표시하고, 모델 입력에서 섞을지는 모델이 정함 | 대선님 |
-| 13 | 정답 라벨과 에이전트 실행 기록 보관 | Electron 앱 기록 파일에 `session_id` 와 라벨을 따로 적음. 선로에는 없음 | 대선님 |
-| 14 | 자체 미션 사전(`targets`, `routes`) 내용과 변화 슬롯 | 쇼핑 비교 미션 하나, 슬롯 1개, 세션마다 변화 1건, 지연 800~4,000ms | 주인님 |
-| 15 | 외부 사이트 대상 | 네이버 증권 1곳(팀 합의 문서 예시) | 주인님 |
-| 16 | P1 이벤트 구현 순서 | `FOCUS`, `BLUR`, `SCROLL_POSITION`, `PAGE_VISIBILITY` 먼저(`INPUT` 은 MVP로 올림) | 대선님 |
-| 17 | `keyless_input` 의 N ms | 1,000ms | 대선님 |
-| 18 | `pointermove` 수집 방식 | `raw`(브라우저가 보낸 대로) | 대선님 |
-| 19 | 가상 앵커 대조와 유효 행동 정의(검토 10번) | 서버가 같은 분포로 가상 앵커 1~2개를 메모리에 두고 같은 특징을 비교. 유효 행동은 `POINTER_DOWN`, `KEY_DOWN`, `WHEEL` | 대선님 |
-| 20 | 대시보드의 점수 표기 | "점수 0.87, 윈도우 #3" 처럼 점수와 번호. 확률(%) 표기는 보정 뒤 | 주인님, 대선님 |
-| 21 | `INFERENCE_RESULT` 의 선택 묶음(이벤트 번호 범위)을 늘 보낼지 | MVP는 보냄(대시보드 연결). 줄여야 하면 빼도 디코더가 받음 | 대선님 |
-| 22 | 확장 블록에서 실제로 채울 항목과 `series` 채널, 점 수 | 모델이 계산하는 것만. 채널 4개 × 점 128개, int16 양자화 | 대선님 |
+| 1 | 온프레미스 서버 외부 공개 방식과 도메인 | Cloudflare Tunnel(포트 개방 없이 됨). 안 되면 Caddy + 공인 도메인 | 모델 담당 |
+| 2 | `UNEXPECTED_UI_CHANGE` 를 P0으로 올림 | P0(`UI_CHANGE_RENDERED`, `UI_CHANGE_FAILED`) | 모델 담당 확인 |
+| 3 | 캡챠 기준 τ_captcha, 차단 기준 τ_block, 판단 시점 | 보호 행동과 `FINAL` 에서 판단. τ_captcha 이상이면 캡챠, 캡챠 실패면 차단, 캡챠 통과 뒤에는 τ_block 이상일 때만 차단, τ_captcha 미만은 통과. 숫자는 τ_captcha 0.80, τ_block 0.90 가안(선호 없이 계산하면 τ_block 0.50, τ_captcha 는 AI 캡챠 통과율 s 를 잰 뒤). 모두 WELCOME으로 알림 | 클라이언트 담당, 모델 담당 함께 정함(지금은 가안) |
+| 4 | 윈도우 길이, 주기, 최소 행동 수 | 최근 10초를 1초마다, 행동 이벤트 3개부터 점수. 모두 WELCOME으로 알림(주기 실험 권장값) | 모델 담당 |
+| 5 | 앵커 없는 세션(외부 사이트)에서 ΔU 특징 처리 | 특징 값을 비우고 결측 표시 열을 둠 | 모델 담당 |
+| 6 | `RUN_LABEL`(라벨, 입력 경로)을 서버로 보낼지 | MVP는 보내지 않고 앱 기록 파일에만. 서버에 학습 데이터를 모을 때만 보냄 | 모델 담당 |
+| 7 | 에이전트가 대시보드 점수를 보는 경로(CDP로 대시보드 대상에 붙기, 창 전체 캡처) | 실행 도구가 실험 페이지 URL 대상 하나에만 붙고, 화면 캡처는 그 뷰만 씀 | 클라이언트 담당 |
+| 8 | 휠 이동량 고정 소수점 배율 | 100배 | 모델 담당 |
+| 9 | CAPTCHA 내부 API 모양 | 문제 요청, 에셋 받기, 답 검증 3개 엔드포인트(내부 API 절) | 모델 담당 |
+| 10 | CAPTCHA 에셋 한도와 형식 | 합 512KiB, 조각 32KiB, PNG, JPEG, WebP만 | 모델 담당 |
+| 11 | CAPTCHA 서버 보호 | 인증 없이 127.0.0.1에만 열기. 다른 장비로 옮기면 서버 간 키 추가 | 모델 담당 |
+| 12 | 챌린지 화면 행동을 같은 윈도우에 섞을지 | `CAPTCHA_VIEW` 구간을 따로 표시하고, 모델 입력에서 섞을지는 모델이 정함 | 모델 담당 |
+| 13 | 정답 라벨과 에이전트 실행 기록 보관 | Electron 앱 기록 파일에 `session_id` 와 라벨을 따로 적음. 선로에는 없음 | 모델 담당 |
+| 14 | 자체 미션 사전(`targets`, `routes`) 내용과 변화 슬롯 | 쇼핑 비교 미션 하나, 슬롯 1개, 세션마다 변화 1건, 지연 800~4,000ms | 클라이언트 담당 |
+| 15 | 외부 사이트 대상 | 네이버 증권 1곳(팀 합의 문서 예시) | 클라이언트 담당 |
+| 16 | P1 이벤트 구현 순서 | `FOCUS`, `BLUR`, `SCROLL_POSITION`, `PAGE_VISIBILITY` 먼저(`INPUT` 은 MVP로 올림) | 모델 담당 |
+| 17 | `keyless_input` 의 N ms | 1,000ms | 모델 담당 |
+| 18 | `pointermove` 수집 방식 | `raw`(브라우저가 보낸 대로) | 모델 담당 |
+| 19 | 가상 앵커 대조와 유효 행동 정의(검토 10번) | 서버가 같은 분포로 가상 앵커 1~2개를 메모리에 두고 같은 특징을 비교. 유효 행동은 `POINTER_DOWN`, `KEY_DOWN`, `WHEEL` | 모델 담당 |
+| 20 | 대시보드의 점수 표기 | "점수 0.87, 윈도우 #3" 처럼 점수와 번호. 확률(%) 표기는 보정 뒤 | 클라이언트 담당, 모델 담당 |
+| 21 | `INFERENCE_RESULT` 의 선택 묶음(이벤트 번호 범위)을 늘 보낼지 | MVP는 보냄(대시보드 연결). 줄여야 하면 빼도 디코더가 받음 | 모델 담당 |
+| 22 | 확장 블록에서 실제로 채울 항목과 `series` 채널, 점 수 | 모델이 계산하는 것만. 채널 4개 × 점 128개, int16 양자화 | 모델 담당 |
 | 23 | 보호 행동 때 근거가 모자란 경우 | v0.3.1에서 정함: 캡챠(A2) | 끝남 |
 | 24 | 보호 행동 판단 중 캡챠 에셋 오류나 CAPTCHA 서버 오류 | v0.3.1에서 클라이언트 에셋 오류는 정함: 1번 다시 띄우고 또 오면 차단(A3). CAPTCHA 서버 오류는 26번 | 끝남(서버 오류는 26) |
-| 25 | `trajectory` 를 판별 모델 입력에 실제로 넣을지 | 선로에는 싣고, 모델에 넣을지는 모델이 정함 | 대선님 |
-| 26 | CAPTCHA 서버 자체가 죽었을 때(챌린지 생성 실패, verify 연결 실패와 5xx) | 가안: 1번 다시 시도한 뒤에도 실패하면 보호 행동을 보류(`STATE` 사유 4 `captcha_server_error`, 통과 아님)하고 사용자에게 잠시 뒤 다시 하라고 안내. 통과로 두면 CAPTCHA 서버 과부하로 모든 세션이 통과하고, 차단으로 두면 사람이 막힘 | 주인님, 대선님(결정 대기) |
-| 27 | 차단 기준 0.5 와 0.9, 캡챠 기준 | 가안: τ_captcha 0.80, τ_block 0.90 그대로. 캡챠 기준은 AI 캡챠 통과율 s 를 잰 뒤 | 주인님, 대선님(결정 대기) |
-| 28 | 캡챠를 한 번 통과한 세션에서 점수 0.80~0.90 인 보호 행동을 계속 통과시킬지 | 가안: 통과 뒤 같은 세션에서 보호 행동이 3번을 넘으면 다시 판단(가짜 서버는 아직 구현하지 않음) | 주인님, 대선님(결정 대기) |
-| 29 | 판단 점수를 세션 전체로 볼지 최근 10초로 볼지 | 가안: 지금처럼 세션 전체 | 주인님, 대선님(결정 대기) |
+| 25 | `trajectory` 를 판별 모델 입력에 실제로 넣을지 | 선로에는 싣고, 모델에 넣을지는 모델이 정함 | 모델 담당 |
+| 26 | CAPTCHA 서버 자체가 죽었을 때(챌린지 생성 실패, verify 연결 실패와 5xx) | 가안: 1번 다시 시도한 뒤에도 실패하면 보호 행동을 보류(`STATE` 사유 4 `captcha_server_error`, 통과 아님)하고 사용자에게 잠시 뒤 다시 하라고 안내. 통과로 두면 CAPTCHA 서버 과부하로 모든 세션이 통과하고, 차단으로 두면 사람이 막힘 | 클라이언트 담당, 모델 담당(결정 대기) |
+| 27 | 차단 기준 0.5 와 0.9, 캡챠 기준 | 가안: τ_captcha 0.80, τ_block 0.90 그대로. 캡챠 기준은 AI 캡챠 통과율 s 를 잰 뒤 | 클라이언트 담당, 모델 담당(결정 대기) |
+| 28 | 캡챠를 한 번 통과한 세션에서 점수 0.80~0.90 인 보호 행동을 계속 통과시킬지 | 가안: 통과 뒤 같은 세션에서 보호 행동이 3번을 넘으면 다시 판단(가짜 서버는 아직 구현하지 않음) | 클라이언트 담당, 모델 담당(결정 대기) |
+| 29 | 판단 점수를 세션 전체로 볼지 최근 10초로 볼지 | 가안: 지금처럼 세션 전체 | 클라이언트 담당, 모델 담당(결정 대기) |
 
 ## 부록: 운영 단계(나중)
 

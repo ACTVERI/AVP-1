@@ -1,99 +1,124 @@
-# ACTVERI AVP/1 프로토콜 연습 저장소
+# actveri-protocol
 
-AVP/1은 S(t) LAB 클라이언트와 통합 판별 서버가 WebSocket 바이너리 프레임으로 행동 이벤트, 판별 점수, 상태와 제어 메시지를 주고받는 규격입니다. 이 저장소에는 v0.3.1 명세 사본, TypeScript 코덱과 Protocol Client, Python 참조 코덱, 두 구현이 함께 읽는 시험 벡터가 있습니다.
+ACTVERI 의 행동 검증 프로토콜 AVP/1 규격과, 그 규격을 바이트 단위로 지키는 TypeScript, Python 코덱이 있는 레포입니다. 두 코덱은 같은 골든 벡터를 통과하고, 서로 만든 프레임을 읽어 같은 결과를 냅니다.
 
-## 폴더
+AVP/1(Action Verification Protocol)은 S(t) LAB 클라이언트와 판별 서버가 WebSocket 바이너리 프레임으로 행동 이벤트, 판별 점수, 상태와 제어 메시지를 주고받는 규격입니다. 현재 판은 v0.3.1 입니다.
+
+## 이 레포가 하는 일
+
+- 규격서: `docs/avp1-protocol.md` 가 AVP/1 의 정본입니다. 프레임, 이벤트, 세션 규칙, 오류 코드, 골든 벡터가 모두 여기에 있습니다.
+- TypeScript 패키지(`ts/`): 코덱, Protocol Client 상태 기계(`Session`), 브라우저 수집기, WebSocket 연결, `createActveri()` SDK 입니다. `pnpm build` 가 의존성 없는 ESM 번들 하나(`ts/dist/actveri.js`)를 만듭니다.
+- Python 참조 코덱(`py/`): 표준 라이브러리만 씁니다. 시험용 가짜 서버(`actveri-server/mock`)가 이 코덱을 그대로 가져다 씁니다.
+- 골든 벡터(`test-vectors/`): 두 코덱이 함께 읽는 계약입니다. hex 와 디코드 JSON 이 짝으로 들어 있습니다.
+- 차등 퍼저(`tools/fuzz/`): 이상한 입력을 두 디코더에 함께 넣어 결과가 갈리는 곳을 찾습니다.
+
+## 왜 바이너리인지
+
+판별 서버는 1초마다 점수 메시지를 보내고, 클라이언트는 50ms 마다 행동 이벤트를 묶어 보냅니다. 같은 내용을 JSON 텍스트로 보내면 키 이름과 숫자 글자가 매번 선로에 실립니다. AVP/1 은 고정 헤더, 정수 코드, varint, 시각 차이로 같은 정보를 더 적은 바이트에 싣습니다.
+
+| 점수 메시지 1개 | 크기 |
+|---|---|
+| AVP/1 바이너리(헤더 24B + 본문) | 36~40B |
+| 같은 내용을 JSON 본문(`{"w":12,"s":2000,"e":12000,"n":400,"p":0.4321}`)으로 실은 경우 | 64~72B |
+
+위 숫자는 실제 선로에서 잰 값이 아니라 계산값입니다. 90초 세션에서 1초마다 최근 10초 윈도우 점수를 낸다고 두고, 윈도우 이벤트 수 20, 400, 1,800 과 점수 소수 넷째 자리로 `py/avp1` 인코더가 만든 바이트 수를 셌습니다. 대시보드 연결을 위해 이벤트 번호 범위까지 싣는 MVP 점수 메시지는 골든 벡터 TV9 처럼 38B 입니다.
+
+전송량, 지연, CPU 를 같은 조건에서 JSON 과 비교한 측정은 아직 없습니다. 측정 방법은 규격서 'JSON 기준선 벤치마크' 절에 있습니다. 바이너리 형식은 판별 정확도를 높이지 않고, 프레임 무결성이 사람임을 증명하지도 않습니다.
+
+## 24바이트 헤더
+
+모든 프레임은 아래 헤더로 시작합니다. 다중 바이트 정수는 리틀 엔디언이고, WebSocket 메시지 하나에 프레임 하나를 담습니다.
+
+| 오프셋 | 크기 | 필드 | 값 |
+|---:|---:|---|---|
+| 0 | 2B | Magic | `0x41 0x56` (ASCII "AV") |
+| 2 | 1B | Version | 메이저 버전 `0x01` |
+| 3 | 1B | Message Type | DATA, ACK, CONTROL, INFERENCE_RESULT, MODEL_INPUT, STATE, ASSET_CHUNK |
+| 4 | 2B | Flags | 비트0 `RETRANSMIT`, 1 `FINAL`, 2 `HAS_CHECKPOINT`, 3 `ACK_REQUESTED`, 4 `TRUNCATED` |
+| 6 | 2B | Event Count | DATA 는 이벤트 수, 나머지는 0 |
+| 8 | 4B | Sequence | 보내는 쪽 프레임 번호. ACK 는 누적 확인 번호 |
+| 12 | 8B | Timestamp | 보내는 쪽 시계의 세션 기준 µs |
+| 20 | 4B | Payload Length | 헤더 뒤 바이트 수 |
+
+## 메시지 흐름
+
+한 세션은 아래 순서로 흐릅니다. 구매 같은 보호 행동의 판단과 집행은 서버가 하고, 클라이언트가 만든 값은 대조용으로만 씁니다.
+
+```mermaid
+sequenceDiagram
+    participant C as S(t) LAB 클라이언트
+    participant S as 판별 서버
+    C->>S: CONTROL HELLO
+    S-->>C: CONTROL WELCOME, FEATURE_SCHEMA, STATE WARMING_UP
+    loop 50ms 마다
+        C->>S: DATA(행동 이벤트)
+        S-->>C: ACK(CRC32, 디코드한 이벤트 수)
+    end
+    S-->>C: INFERENCE_RESULT(1초마다 ai_score)
+    C->>S: DATA(PROTECTED_ACTION, 구매 순간)
+    S-->>C: INFERENCE_RESULT(판단 점수)
+    opt 점수가 캡챠 기준 이상이거나 근거가 모자람
+        S-->>C: CONTROL CAPTCHA_CHALLENGE, ASSET_CHUNK x 조각 수, STATE CAPTCHA_PENDING
+        C->>S: DATA(챌린지 화면 포인터), CONTROL CAPTCHA_ANSWER
+        S-->>C: CONTROL CAPTCHA_RESULT
+    end
+    alt 통과
+        S-->>C: STATE action_allowed + 1회용 action_token
+    else 차단
+        S-->>C: STATE BLOCKED
+    end
+    C->>S: CONTROL FINISH
+    S-->>C: INFERENCE_RESULT(FINAL), STATE ENDED
+```
+
+1. HELLO 와 WELCOME 으로 세션을 엽니다. WELCOME 이 묶음 간격, 윈도우, 캡챠 기준, 차단 기준을 알립니다.
+2. 클라이언트는 행동 이벤트를 DATA 로 묶어 보내고, 서버는 버퍼에 넣은 뒤 받은 프레임의 CRC32 를 담은 ACK 를 돌려줍니다.
+3. 서버는 1초마다 최근 10초 윈도우로 `INFERENCE_RESULT` 를 보냅니다. 이 점수는 화면에만 쓰입니다.
+4. 구매 버튼을 누르면 `PROTECTED_ACTION` 이벤트가 바로 나가고, 서버는 그때까지 받은 근거 전체로 한 번 판단합니다. 결과 `STATE` 에는 그 행동의 `action_event_seq` 가 실립니다.
+5. 점수가 캡챠 기준 이상이거나 근거가 모자라면 서버가 CAPTCHA 서버의 문제를 `CAPTCHA_CHALLENGE` 와 `ASSET_CHUNK` 로 중계합니다. 클라이언트가 `CAPTCHA_ANSWER` 를 보내면 서버는 챌린지 화면 포인터 DATA 로 궤적을 다시 계산해 `CAPTCHA_RESULT` 를 보냅니다.
+6. 통과면 `STATE` 에 1회용 `action_token` 이 실리고, 행동 완료는 이 토큰을 서버에 확인한 쪽만 인정합니다. 캡챠 실패나 차단 기준 이상이면 `STATE` `BLOCKED` 입니다.
+7. 클라이언트가 `FINISH` 를 보내면 서버는 세션 전체 점수(`FINAL`)와 `STATE` `ENDED` 를 보내고 닫습니다.
+
+## 빠른 실행
+
+Node 22, pnpm, Python 3.11 이상, pytest 가 필요합니다. 명령은 레포 최상위에서 시작합니다.
+
+```bash
+cd ts && pnpm install && pnpm test && pnpm typecheck && pnpm build
+cd py && python -m pytest -q
+python tools/fuzz/fuzz.py --total 2000
+```
+
+`pnpm build` 는 `ts/dist/actveri.js` 와 타입 `ts/dist/actveri.d.ts` 를 만듭니다. 데모 페이지는 이 파일 하나를 가져다 `createActveri()` 를 부릅니다.
+
+## 시험 방법과 결과
+
+| 명령 | 보는 내용 | 결과 |
+|---|---|---|
+| `pnpm test`(ts) | 골든 벡터와 경계 사례, Session 단위 시험, 수집기와 화면 변화, ws 시험 서버 연결, 층 규칙, TS 와 Python 왕복, 차등 퍼징 1,000건 | 14개 파일, 329개 통과 |
+| `pnpm typecheck`, `pnpm build`(ts) | 타입 검사, ESM 번들 | 오류 없음 |
+| `python -m pytest -q`(py) | 골든 벡터, 코덱, 판정 토큰 | 232개 통과 |
+| `python tools/fuzz/fuzz.py --total 2000` | TS 와 Python 디코더 차등 퍼징 2,000건 | 버그와 불일치 0묶음 |
+
+TS 와 Python 왕복 시험은 `python` 명령으로 Python 을 부릅니다. 이름이 다르면 `PYTHON` 환경 변수로 경로를 줍니다. 왕복 시험만 따로 돌릴 때는 `cd ts && pnpm exec vitest run test/cross-lang.test.ts` 이고, `AVP_CROSS_SEED=7` 처럼 시드를 바꿀 수 있습니다.
+
+퍼저의 TS 쪽은 `ts/node_modules` 의 esbuild 로 `src/codec.ts` 를 묶어 쓰므로 `pnpm install` 뒤에 돌립니다. 더 길게 돌릴 때는 `python tools/fuzz/fuzz.py --total 22000 --reduce 40 --report fuzz-report.json` 입니다. 찾은 불일치와 판단은 `test-vectors/avp1-fuzz-findings.json` 에 있고, 그 가운데 고친 항목은 두 코덱의 벡터 시험이 함께 읽습니다.
+
+## 폴더 구조
 
 ```text
-docs/avp1-protocol.md         v0.3.1 명세 사본. 정본은 actveri-protocol 저장소
-docs/avp1-protocol-v0.3.md    v0.3 명세. v0.3.1 에서 바뀐 점을 대조할 때만 봄
-docs/avp1-protocol-v0.2.md    v0.2 명세. v0.3 에서 바뀐 점을 대조할 때만 봄
-docs/avp1-protocol-v0.1.md    v0.1 명세. 바이너리 골격의 근거로만 남김
-docs/architecture.md          TS 패키지의 층과 import 규칙
-test-vectors/avp1-v0.2.json   골든 벡터 TV1~TV22. 명세 본문과 같은 내용이고 두 구현의 계약
-test-vectors/avp1-v0.3.json   v0.3 골든 벡터 TV23~TV35(차단, 보호 행동, WELCOME 새 필드, 궤적 요약, FINISH 뒤 DATA)
-test-vectors/avp1-v0.3.1.json v0.3.1 골든 벡터 TV36~TV73(판단 결과 STATE 묶음, 캡챠 시드, json 수 한도, 끝 바이트, 세션 규칙)
-test-vectors/avp1-v0.2-extra.json  명세 밖 경계 사례(오류 코드, 선택 필드, 확장 블록)
+docs/avp1-protocol.md                 AVP/1 v0.3.1 규격서(정본)
+docs/avp1-protocol-v0.1.md            v0.1 규격. 바이너리 골격의 근거로만 남김
+docs/architecture.md                  TS 패키지의 층과 import 규칙
+test-vectors/avp1-v0.2.json           골든 벡터 TV1~TV22
+test-vectors/avp1-v0.3.json           골든 벡터 TV23~TV35(차단, 보호 행동, WELCOME 새 필드, 궤적 요약)
+test-vectors/avp1-v0.3.1.json         골든 벡터 TV36~TV73(판단 결과 STATE 묶음, 캡챠 시드, 한도, 세션 규칙)
+test-vectors/avp1-v0.2-extra.json     규격 밖 경계 사례(오류 코드, 선택 필드, 확장 블록)
 test-vectors/avp1-fuzz-findings.json  차등 퍼징에서 찾은 불일치와 판단
-tools/fuzz/                   TS와 Python 디코더 차등 퍼저
-ts/                           TypeScript 패키지(pnpm, vitest)
-py/                           Python 참조 코덱(표준 라이브러리만, pytest)
+tools/fuzz/                           TS 와 Python 디코더 차등 퍼저
+ts/                                   TypeScript 패키지(pnpm, vitest)
+py/                                   Python 참조 코덱(pytest)
+CHANGELOG.md                          버전별 변경 기록
 ```
 
-FastAPI 서버는 `py/avp1/codec.py` 를 그대로 가져다 씁니다. 데모 페이지는 `ts/dist/actveri.js` 파일 하나를 가져다 `createActveri()` 를 부릅니다.
-
-## v0.3.1 에서 바뀐 점
-
-위협 모델을 "클라이언트와 페이지는 믿지 않는다"로 두고 고쳤습니다. 판단 결과 `STATE` 끝에 그 보호 행동의 `action_event_seq` 와, 통과일 때 1회용 `action_token` 을 선택 묶음으로 싣습니다. TS `Session.protectedAction()` 은 번호가 같은 `action_allowed` 만 허용으로 돌려줍니다. 두 코덱은 json 안 수가 유한하지 않거나 2^53-1 을 넘으면, 짝 없는 서로게이트가 있으면 `E_CONTROL_BODY`, 이벤트 시각이 2^53-1 을 넘으면 `E_RANGE`, 겹친 WELCOME 사전 종류는 `E_MISSION`(표 밖 종류는 버림), `STATE`, `ACK`, `MODEL_INPUT`, `INFERENCE_RESULT` 끝에 남는 바이트는 `E_LENGTH` 로 봅니다. `Session` 은 WELCOME 값을 한도로 자르고, FINISH 뒤 ENDED 를 끝없이 기다리지 않으며, 수집기는 포커스 요소까지 민감 판정에 넣습니다. 항목마다 명세 사본의 'v0.3에서 바뀐 점 (v0.3.1)' 표에 A 번호로 있습니다.
-
-## v0.3 에서 바뀐 점
-
-판단은 보호할 행동(구매, 송금, 제출)을 알리는 `PROTECTED_ACTION` 이벤트를 받은 순간 그때까지의 근거로 한 번 합니다. 캡챠 기준 이상이면 캡챠, 캡챠 실패면 `STATE` 7 `BLOCKED`, 캡챠 통과 뒤에는 차단 기준 이상일 때만 차단입니다. 차단 기준과 발동 방식은 WELCOME 끝 선택 묶음(`block_threshold_milli`, `captcha_trigger`)에 실립니다.
-
-두 코덱은 오류별 닫기 코드 표 `CLOSE_CODES` 를 내보내고, CONTROL 끝에 남는 바이트가 있으면 `trailing_offset` 을 알려 주고, ERROR `message` 를 256바이트 안에서 글자 경계로 자릅니다. TS `Session` 은 캡챠 에셋 조각을 모아 크기와 SHA-256 을 확인한 뒤 `onCaptcha` 로 넘기고, `captchaView`, `answerCaptcha` 로 화면 이벤트와 답을 보내며, `BLOCKED` 를 받으면 `FINISH(blocked)` 로 끝냅니다.
-
-## v0.2 에서 바뀐 점
-
-서버가 판정 토큰 대신 `INFERENCE_RESULT`(`ai_score`), `STATE`, CAPTCHA 중계 메시지를 클라이언트로 보냅니다. Message Type이 7개로 늘었고, CONTROL 본문은 JSON 대신 고정 바이너리 레이아웃입니다. 사이트마다 다른 값(`params`, `meta`, `answer`)만 길이 붙은 JSON으로 남았습니다.
-
-이벤트는 ML 입출력 스펙 목록을 따라 다시 번호를 매겼습니다. 키는 `KEY_DOWN`, `KEY_UP` 으로 나뉘고, 값만 바꾸는 자동화를 잡으려고 `INPUT` 이 MVP에 들어왔습니다. 좌표는 음수를 담는 `svar` 이고, 대상은 세션 번호와 `TARGET_INFO` 로 보냅니다.
-
-모든 비어 있지 않은 DATA는 `CHECKPOINT` 로 시작하고 그 안의 `event_seq` 로 이벤트 단위 누락을 셉니다. 서버 ACK에는 받은 프레임의 CRC32와 디코드한 이벤트 수가 실립니다.
-
-재연결은 새 세션이라 v0.1의 RESUME, beacon, 판정 토큰 검증은 쓰지 않습니다. `ts/src/token.ts` 와 `py/avp1/token.py` 는 운영 단계 부록용으로 남아 있습니다.
-
-명세 사본에서 정본과 달라진 곳은 커밋 메시지에 항목마다 적었습니다.
-
-## TS 시험과 빌드
-
-Node 22와 pnpm이 필요합니다. 아래 명령은 저장소 최상위에서 시작합니다.
-
-```bash
-cd ts
-pnpm install
-pnpm test
-pnpm typecheck
-pnpm build
-```
-
-`pnpm test` 에는 골든 벡터와 경계 사례, Session 단위 시험, 수집기와 화면 변화 시험, ws 시험 서버를 쓰는 연결 시험, 층 규칙 시험, TS와 Python 왕복 시험이 함께 돕니다. 왕복 시험은 `python` 명령으로 Python을 부르므로, 다른 이름이면 `PYTHON` 환경 변수로 경로를 줍니다.
-
-`pnpm build` 는 의존성 없는 ESM 번들 `ts/dist/actveri.js` 와 타입 `ts/dist/actveri.d.ts` 를 만듭니다.
-
-## Python 시험
-
-Python 3.11 이상과 pytest가 필요합니다.
-
-```bash
-cd py
-python -m pytest -q
-```
-
-## 왕복 시험만 따로 돌리기
-
-고정 시드로 메시지 7종(v0.3 의 보호 행동 이벤트, WELCOME 묶음, 궤적 요약 포함)을 섞은 무작위 프레임 400개씩을 만듭니다. TS가 만든 것은 Python이, Python이 만든 것은 TS가 디코드해 같은 JSON인지 보고, 같은 입력을 자기 인코더로 써서 hex까지 같은지 봅니다.
-
-```bash
-cd ts
-pnpm exec vitest run test/cross-lang.test.ts
-```
-
-다른 시드로 더 돌려 볼 때는 `AVP_CROSS_SEED=7 pnpm exec vitest run test/cross-lang.test.ts` 처럼 시드를 줍니다.
-
-Python 쪽 명령을 직접 부를 수도 있습니다. `gen` 은 무작위 프레임을 파일로 쓰고, `check` 는 그 형식의 파일을 디코드하고 다시 인코드해 비교합니다.
-
-```bash
-cd py
-python -m avp1.cross gen 20261109 400 cases.json
-python -m avp1.cross check cases.json
-```
-
-## 차등 퍼징
-
-정상 프레임 대신 이상한 입력(골든 벡터를 뒤튼 것, 무작위 바이트, 헤더만 맞는 프레임, 한도 경계)을 TS와 Python 디코더에 함께 넣어 결과, 오류 코드, 다시 인코드한 바이트를 비교합니다. `pnpm test` 에는 1,000건짜리 짧은 판이 들고, 전체 판은 직접 돌립니다. TS 쪽은 `ts/node_modules` 의 esbuild 로 `src/codec.ts` 를 묶어 쓰므로 `pnpm install` 뒤에 돌립니다.
-
-```bash
-python tools/fuzz/fuzz.py --total 22000 --reduce 40 --report fuzz-report.json
-```
-
-찾은 불일치와 판단(고침, 규격 결정 필요, 규격이 허용)은 `test-vectors/avp1-fuzz-findings.json` 에 있고, 그 가운데 고친 항목은 두 코덱의 벡터 시험이 함께 읽습니다.
+`actveri-server` 와 `actveri-web` 은 이 레포를 형제 폴더로 두고 코덱과 골든 벡터를 사본 없이 읽습니다. 세 레포를 같은 폴더 아래에 나란히 받습니다.
