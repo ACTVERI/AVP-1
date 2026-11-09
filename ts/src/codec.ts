@@ -1,4 +1,4 @@
-// AVP/1 v0.3.1 인코더와 디코더. 디코드 결과 JSON 모양은 test-vectors/avp1-v0.2.json, avp1-v0.3.json 이 정본입니다.
+// AVP/1 v0.3.2 인코더와 디코더. 디코드 결과 JSON 모양은 test-vectors/avp1-v0.2.json, avp1-v0.3.json 이 정본입니다.
 // py/avp1/codec.py 와 같은 표, 같은 필드 순서를 씁니다. 한쪽을 고치면 다른 쪽도 고치고 왕복 시험으로 확인합니다.
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -81,7 +81,8 @@ export const CLOSE_CODES: Record<string, number | null> = {
   E_RANGE: 4400, E_SESSION_LIMIT: 4429, E_RATE_LIMIT: 4429, E_INTERNAL: 1011,
 };
 export const CHALLENGE_REASON: Table = { 1: "final_above_threshold", 2: "sustained_above_threshold", 3: "action_above_threshold" };
-export const ANSWER_STATUS: Table = { 0: "answered", 1: "asset_error", 2: "timeout", 3: "cancelled" };
+// 0, 1 은 v0.3.1 에셋 중계용. iframe 챌린지는 4~6 과 2, 3 을 씀
+export const ANSWER_STATUS: Table = { 0: "answered", 1: "asset_error", 2: "timeout", 3: "cancelled", 4: "success", 5: "fail", 6: "frame_error" };
 export const CAPTCHA_RESULT: Table = { 0: "fail", 1: "pass", 2: "expired", 3: "error" };
 export const STATE_NAME: Table = { 1: "WARMING_UP", 2: "SCORING", 3: "CAPTCHA_PENDING", 4: "CAPTCHA_PASSED", 5: "CAPTCHA_FAILED", 6: "ENDED", 7: "BLOCKED" };
 export const STATE_REASON: Table = {
@@ -141,10 +142,14 @@ const CONTROLS: Record<number, Field[]> = {
   5: [["reason", "enum", STOP_REASON]],
   6: [["code", "enum16", ERROR_CODES], ["fatal", "bool"], ["message", "cutstr", 256]],
   7: [["schema_id", "uvar"], ["model_id", "str", 64], ["model_version", "str", 32], ["window_steps", "uvar"], ["features", "names"], ["channels", "channels"]],
-  8: [["challenge_id", "str"], ["status", "enum", ANSWER_STATUS], ["answer", "json"]],
+  8: [["challenge_id", "str"], ["status", "enum", ANSWER_STATUS], ["answer", "json"],
+    // v0.3.2 선택 묶음. iframe 이 success 와 함께 준 1회용 토큰
+    ["_v032", "opt", [["verification_token", "str", 128]]]],
   9: [],
   10: [["challenge_id", "str"], ["challenge_no", "uvar"], ["window_id", "u32"], ["reason", "enum", CHALLENGE_REASON], ["ttl_ms", "uvar"],
-    ["asset_count", "u8"], ["asset_total_bytes", "uvar"], ["meta", "json"]],
+    ["asset_count", "u8"], ["asset_total_bytes", "uvar"], ["meta", "json"],
+    // v0.3.2 선택 묶음. 있으면 iframe 챌린지이고 에셋 필드는 0
+    ["_v032", "opt", [["frame_url", "str", 1024]]]],
   11: [["challenge_id", "str"], ["result", "enum", CAPTCHA_RESULT], ["next_state", "enum", STATE_NAME]],
   12: [["label", "enum", RUN_LABEL], ["input_path", "enum", INPUT_PATH], ["set_at_ms", "uvar"]],
 };

@@ -2,7 +2,7 @@
 
 ACTVERI 의 행동 검증 프로토콜 AVP/1 규격과, 그 규격을 바이트 단위로 지키는 TypeScript, Python 코덱이 있는 레포입니다. 두 코덱은 같은 골든 벡터를 통과하고, 서로 만든 프레임을 읽어 같은 결과를 냅니다.
 
-AVP/1(Action Verification Protocol)은 S(t) LAB 클라이언트와 판별 서버가 WebSocket 바이너리 프레임으로 행동 이벤트, 판별 점수, 상태와 제어 메시지를 주고받는 규격입니다. 현재 판은 v0.3.1 입니다.
+AVP/1(Action Verification Protocol)은 S(t) LAB 클라이언트와 판별 서버가 WebSocket 바이너리 프레임으로 행동 이벤트, 판별 점수, 상태와 제어 메시지를 주고받는 규격입니다. 현재 판은 v0.3.2 입니다.
 
 ## 이 레포가 하는 일
 
@@ -58,8 +58,9 @@ sequenceDiagram
     C->>S: DATA(PROTECTED_ACTION, 구매 순간)
     S-->>C: INFERENCE_RESULT(판단 점수)
     opt 점수가 캡챠 기준 이상이거나 근거가 모자람
-        S-->>C: CONTROL CAPTCHA_CHALLENGE, ASSET_CHUNK x 조각 수, STATE CAPTCHA_PENDING
-        C->>S: DATA(챌린지 화면 포인터), CONTROL CAPTCHA_ANSWER
+        S-->>C: CONTROL CAPTCHA_CHALLENGE(frame_url), STATE CAPTCHA_PENDING
+        C->>C: CAPTCHA 서버 iframe 에서 풀이, postMessage 로 결과와 토큰
+        C->>S: CONTROL CAPTCHA_ANSWER(success + verification_token)
         S-->>C: CONTROL CAPTCHA_RESULT
     end
     alt 통과
@@ -75,7 +76,7 @@ sequenceDiagram
 2. 클라이언트는 행동 이벤트를 DATA 로 묶어 보내고, 서버는 버퍼에 넣은 뒤 받은 프레임의 CRC32 를 담은 ACK 를 돌려줍니다.
 3. 서버는 1초마다 최근 10초 윈도우로 `INFERENCE_RESULT` 를 보냅니다. 이 점수는 화면에만 쓰입니다.
 4. 구매 버튼을 누르면 `PROTECTED_ACTION` 이벤트가 바로 나가고, 서버는 그때까지 받은 근거 전체로 한 번 판단합니다. 결과 `STATE` 에는 그 행동의 `action_event_seq` 가 실립니다.
-5. 점수가 캡챠 기준 이상이거나 근거가 모자라면 서버가 CAPTCHA 서버의 문제를 `CAPTCHA_CHALLENGE` 와 `ASSET_CHUNK` 로 중계합니다. 클라이언트가 `CAPTCHA_ANSWER` 를 보내면 서버는 챌린지 화면 포인터 DATA 로 궤적을 다시 계산해 `CAPTCHA_RESULT` 를 보냅니다.
+5. 점수가 캡챠 기준 이상이거나 근거가 모자라면 서버가 CAPTCHA 서버에 챌린지를 만들고 iframe 주소를 `CAPTCHA_CHALLENGE` 로 보냅니다. 클라이언트는 그 주소를 그대로 iframe 으로 열고, iframe 이 준 결과와 1회용 토큰을 `CAPTCHA_ANSWER` 로 전합니다. 궤적 판정은 CAPTCHA 서버가 하고, 판별 서버는 토큰을 CAPTCHA 서버에 1번 확인(consume)한 뒤 `CAPTCHA_RESULT` 를 보냅니다.
 6. 통과면 `STATE` 에 1회용 `action_token` 이 실리고, 행동 완료는 이 토큰을 서버에 확인한 쪽만 인정합니다. 캡챠 실패나 차단 기준 이상이면 `STATE` `BLOCKED` 입니다.
 7. 클라이언트가 `FINISH` 를 보내면 서버는 세션 전체 점수(`FINAL`)와 `STATE` `ENDED` 를 보내고 닫습니다.
 

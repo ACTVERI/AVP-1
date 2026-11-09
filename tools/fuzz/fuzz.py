@@ -283,7 +283,7 @@ def fix_plen(b: bytes) -> bytes:
 
 def seeds() -> list[bytes]:
     out = []
-    for name in ("avp1-v0.2.json", "avp1-v0.3.json", "avp1-v0.2-extra.json"):
+    for name in ("avp1-v0.2.json", "avp1-v0.3.json", "avp1-v0.2-extra.json", "avp1-v0.3.2.json"):
         for v in json.loads((VEC / name).read_text(encoding="utf-8"))["vectors"]:
             out.append(bytes.fromhex(v["hex"].replace(" ", "")))
     return out
@@ -416,7 +416,7 @@ class Gen:
         r = self.r
         over = r.random() < 0.5  # 최대+1
         k = 1 if over else 0
-        t = r.randrange(27)
+        t = r.randrange(28)
         cp = bytes([0x50, 7]) + b"\x00" + uvar(r.randrange(100)) + b"\x07\x14\x28\x00\x00"
         if t == 0:  # Payload Length 65,536 / 65,537 (ASSET_CHUNK 의 data 로 채움)
             head = uvar(1) + b"c" + struct.pack("<BHHI", 0, 0, 1, 10) + bytes(32)
@@ -543,6 +543,12 @@ class Gen:
                             b"-1e400", b"1e-400", b"5e-324", b"1.0", b"1E2", b"-0", b"0.1", b"9007199254740991"])
             js = b'{"z":' + num + b"}"
             return frame(3, b"\x03\x01\x01\x00\x00\x00" + uvar(len(js)) + js)
+        if t == 27:  # v0.3.2 frame_url 1,024 / 1,025B, verification_token 128 / 129B
+            if r.random() < 0.5:
+                url = b"https://c.example/" + b"s" * (1024 + k - 18)
+                return frame(3, b"\x0A\x01c\x01" + struct.pack("<I", 3) + b"\x01\x00\x00\x00\x02{}" + uvar(len(url)) + url)
+            tok = b"t" * (128 + k)
+            return frame(3, b"\x08\x01c\x04\x02{}" + uvar(len(tok)) + tok)
         # 23: 크기 상한 경계의 정상 프레임을 Python 인코더로 만들어 뒤에 바이트를 k 개 덧붙임(남는 바이트)
         f = {"header": {"msg_type": "STATE", "flags": [], "seq": 1, "timestamp_us": 1},
              "state": {"state": r.randrange(1, 8), "reason": r.randrange(12), "window_id": r.randrange(2**32)}}

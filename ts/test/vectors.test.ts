@@ -9,6 +9,7 @@ const file = load("avp1-v0.2.json");
 const extra = load("avp1-v0.2-extra.json");
 const v3 = load("avp1-v0.3.json");
 const v31 = load("avp1-v0.3.1.json");
+const v32 = load("avp1-v0.3.2.json");
 const F32 = new Set<string>(file.compare.f32_fields);
 const byId: Record<string, Obj> = Object.fromEntries(file.vectors.map((v: Obj) => [v.id, v]));
 
@@ -122,6 +123,37 @@ describe("골든 벡터 TV36~TV73(v0.3.1)", () => {
       expect(toHex(encodeFrame(v.expected, v31.dict))).toBe(v.hex);
     });
   }
+});
+
+describe("골든 벡터 TV74~TV87(v0.3.2)", () => {
+  it("파일에 TV74부터 TV87까지 순서대로 있음", () => {
+    expect(v32.vectors.map((v: Obj) => v.id)).toEqual(Array.from({ length: 14 }, (_, i) => `TV${i + 74}`));
+  });
+
+  for (const v of v32.vectors) {
+    if (v.error) {
+      it(`${v.id} ${v.name}: ${v.error}`, () => {
+        expect(errorCode(() => decodeFrame(fromHex(v.hex)))).toBe(v.error);
+      });
+      continue;
+    }
+    it(`${v.id} 디코드 결과가 기대 JSON과 같음`, () => {
+      expect(decodeFrame(fromHex(v.hex))).toEqual(v.expected);
+    });
+    it(`${v.id} 기대 JSON을 인코드하면 같은 hex`, () => {
+      expect(toHex(encodeFrame(v.expected))).toBe(v.hex);
+    });
+  }
+
+  it("인코더는 frame_url 1,025B, verification_token 129B 를 보내지 않고 E_ENCODE", () => {
+    const tv = (id: string) => v32.vectors.find((v: Obj) => v.id === id);
+    const ch = structuredClone(tv("TV78").expected);
+    ch.control.frame_url += "a";
+    expect(errorCode(() => encodeFrame(ch))).toBe("E_ENCODE");
+    const an = structuredClone(tv("TV80").expected);
+    an.control.verification_token += "t";
+    expect(errorCode(() => encodeFrame(an))).toBe("E_ENCODE");
+  });
 });
 
 describe("v0.3 코덱 경계", () => {

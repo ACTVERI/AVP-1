@@ -1,6 +1,17 @@
 # 변경 기록
 
-AVP/1 규격과 두 코덱의 버전별 변경입니다. 항목마다 자세한 이유와 이전 판과의 대조표는 규격서(`docs/avp1-protocol.md`)의 'v0.3에서 바뀐 점 (v0.3.1)', 'v0.2에서 바뀐 점 (v0.3)', 'v0.1에서 바뀐 점' 절에 있습니다.
+AVP/1 규격과 두 코덱의 버전별 변경입니다. 항목마다 자세한 이유와 이전 판과의 대조표는 규격서(`docs/avp1-protocol.md`)의 'v0.3.1에서 바뀐 점 (v0.3.2)', 'v0.3에서 바뀐 점 (v0.3.1)', 'v0.2에서 바뀐 점 (v0.3)', 'v0.1에서 바뀐 점' 절에 있습니다.
+
+## v0.3.2
+
+캡챠를 CAPTCHA 서버가 내보내는 iframe 에서 풀게 바꿨습니다. 캡챠가 다른 출처의 iframe 이 되면 S(t) LAB 수집기가 그 안의 포인터를 보지 못해, 판별 서버가 DATA 로 궤적을 다시 계산하던 v0.3.1 규칙(A1)을 쓸 수 없기 때문입니다. 위협 모델은 그대로이고, 판정 근거는 CAPTCHA 서버의 재계산과 판별 서버의 토큰 consume 입니다. 더한 필드는 CONTROL 끝 선택 묶음이라 헤더 Version 은 1, HELLO `proto_minor` 는 3 입니다.
+
+- `CAPTCHA_CHALLENGE` 끝에 `frame_url`(1,024B 이하, 불투명 값이라 클라이언트는 그대로 엶)을 붙였습니다. iframe 챌린지는 에셋 0, `meta` 는 `kind` 만이고 `ASSET_CHUNK` 를 보내지 않습니다. 에셋 중계는 바이트 배치를 지키려고 선택으로 남겼습니다.
+- `CAPTCHA_ANSWER` 끝에 `verification_token`(128B 이하, `success` 일 때만)을 붙이고 `status` 에 `success`, `fail`, `frame_error` 를 더했습니다. `trajectory` 요약은 없앴습니다.
+- 판별 서버는 토큰을 consume 해 `valid` 이고 같은 챌린지일 때만 통과로 봅니다. `frame_error` 는 `asset_error` 와 같이 1번만 다시 띄웁니다.
+- 골든 벡터 TV74~TV87 을 더했습니다(`test-vectors/avp1-v0.3.2.json`). 기존 벡터는 그대로입니다.
+
+항목마다 규격서 표의 B 번호가 붙어 있습니다.
 
 ## v0.3.1
 

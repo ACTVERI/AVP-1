@@ -217,6 +217,8 @@ class _Gen:
                  "answer": js()}
             if self.r.random() < 0.5:
                 c["answer"] = {**c["answer"], "elapsed_ms": self.int(0, 120000), "trajectory": self.trajectory()}
+            if self.r.random() < 0.5:
+                c["verification_token"] = self.text()
         elif k == 8:
             c = {"subtype": "SCORE_REQUEST"}
         elif k == 9:
@@ -224,6 +226,8 @@ class _Gen:
                  "window_id": self.int(0, 2**32), "reason": self.enum(CHALLENGE_REASON),
                  "ttl_ms": self.int(0, 120000), "asset_count": self.int(0, 9),
                  "asset_total_bytes": self.int(0, 524289), "meta": js()}
+            if self.r.random() < 0.5:
+                c["frame_url"] = self.text()
         elif k == 10:
             c = {"subtype": "CAPTCHA_RESULT", "challenge_id": self.text(), "result": self.enum(CAPTCHA_RESULT),
                  "next_state": self.enum(STATE_NAME)}

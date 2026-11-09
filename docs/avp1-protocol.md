@@ -1,10 +1,26 @@
-# AVP/1 프로토콜 명세 v0.3.1 (S(t) LAB)
+# AVP/1 프로토콜 명세 v0.3.2 (S(t) LAB)
 
 AVP/1(Action Verification Protocol)은 S(t) LAB 클라이언트와 S(t) 통합 판별 서버가 WebSocket 바이너리 프레임으로 행동 이벤트, 판별 점수, 상태와 제어 메시지를 주고받는 애플리케이션 규격입니다. v0.2는 팀의 ML 입출력 스펙 v0.1을 기준으로 다시 짰고, 입력은 그 스펙의 이벤트와 필드, 출력은 `ai_score` 하나입니다. 구조는 팀 합의 문서를 따르고, 해커톤에서 2명이 5시간 안에 만들 범위를 항목마다 MVP 또는 나중으로 표시합니다.
 
 v0.3은 v0.2 위에 판단 시점(보호할 행동), 차단 상태, 캡챠 답의 궤적 요약을 더했습니다. v0.3.1은 검토 4건(코드 검토 2건, 독립 공격 검토, 차등 퍼징)의 지적을 반영한 고침판이고, 위협 모델은 "클라이언트와 페이지는 믿지 않는다"입니다. 바뀐 곳은 바로 아래 표에 있고, 기존 필드의 뜻과 크기는 바꾸지 않아 헤더 Version은 그대로 1입니다. v0.3.1에서 더한 필드(`STATE` 선택 묶음)는 v0.3 디코더가 끝 바이트로 무시하던 자리라 HELLO `proto_minor` 는 3 그대로 둡니다. 버전별 변경 기록은 레포 최상위 `CHANGELOG.md` 에 있습니다.
 
+v0.3.2는 캡챠를 CAPTCHA 서버가 내보내는 iframe 에서 풀게 바꾼 판입니다. AVP/1 로는 iframe 주소(`frame_url`)와 1회용 확인 토큰(`verification_token`)만 오가고, 궤적 판정은 CAPTCHA 서버가, 통과 확인은 판별 서버의 토큰 consume 이 합니다. 더한 두 필드는 v0.3.1 디코더가 CONTROL 끝 바이트로 무시하던 자리라 헤더 Version 은 1, HELLO `proto_minor` 는 3 그대로입니다.
+
 v0.1(`avp1-protocol-v0.1.md`)과 그 검토 결과는 바이너리 골격의 근거로만 씁니다. 이 문서와 v0.1이 다르면 이 문서가 맞습니다.
+
+## v0.3.1에서 바뀐 점 (v0.3.2)
+
+v0.3.1은 판별 서버가 AVP DATA 로 받은 챌린지 화면 포인터로 궤적을 다시 계산했습니다(A1). 캡챠가 다른 출처의 iframe 으로 바뀌면 S(t) LAB 수집기는 iframe 안 포인터를 보지 못하므로, 궤적 재계산은 iframe 을 내보내는 CAPTCHA 서버로 옮깁니다. 위협 모델("클라이언트와 페이지는 믿지 않는다")은 그대로입니다. 판정 근거는 CAPTCHA 서버의 재계산과 판별 서버의 토큰 consume 이고, 클라이언트가 전하는 `status` 와 토큰은 consume 으로 확인하기 전에는 근거가 아닙니다. B 번호는 v0.3.2 고침 항목 번호입니다.
+
+| 번호 | v0.3.1 | v0.3.2 | 이유 |
+|---|---|---|---|
+| B1 | `CAPTCHA_CHALLENGE` 가 `meta`(`seed`, `prompt_code`, `assets`)와 `ASSET_CHUNK` 로 문제를 앱에 전함 | 끝에 선택 묶음 `frame_url`(`str`, 1,024B 이하)을 붙임. 있으면 iframe 챌린지이고 `asset_count` 0, `asset_total_bytes` 0, `meta` 는 `{"kind":...}` 만, `ASSET_CHUNK` 없음 | 문제와 정답 판정이 모두 CAPTCHA 서버 안에 있어 앱에 줄 것이 주소뿐 |
+| B2 | 에셋, 시드 전달 경로 | 지우지 않고 선택으로 둠(`frame_url` 이 없는 챌린지). v0.3.2 판별 서버는 보내지 않음. v0.4 에서 지울 후보 | 필드를 지우면 기존 subtype 의 바이트 배치가 바뀌어 v0.3.1 벡터(TV11, TV40)와 디코더가 깨짐. 0 으로 두는 비용은 3바이트 |
+| B3 | `CAPTCHA_ANSWER` `answer` 에 문제별 답과 `trajectory` 요약 | 끝에 선택 묶음 `verification_token`(`str`, 128B 이하, `success` 일 때만). `status` 에 4 `success`, 5 `fail`, 6 `frame_error` 를 더함. iframe 챌린지의 `answer` 는 늘 `{}` 이고 `trajectory` 는 없앰 | iframe 결과(`postMessage`)를 그대로 전하고, 앱이 지어낼 수 있는 요약을 선로에서 뺌 |
+| B4 | 판별 서버가 `CAPTCHA_VIEW` shown 부터 답까지 DATA 포인터로 궤적을 다시 계산(A1) | A1 삭제. 궤적 판정은 CAPTCHA 서버. 판별 서버는 `success` 와 토큰을 받으면 `POST /internal/verifications/consume` 으로 1번 확인하고, `valid` 이고 응답 `challenge_id` 가 그 챌린지와 같을 때만 통과 | iframe 안 포인터는 AVP 로 오지 않음 |
+| B5 | `asset_error` 1번 다시 띄우기(A3) | `frame_error`(iframe 로드 실패)에 같은 규칙. iframe 챌린지에 온 `asset_error` 도 `frame_error` 와 같게 봄 | 클라이언트 보고만으로 캡챠를 건너뛰지 못하게 하는 이유가 같음 |
+| B6 | CAPTCHA 서버는 127.0.0.1 에만 열고 앱에서 닿지 않음 | iframe 경로(`/challenges/{id}/frame` 과 그 화면이 쓰는 공개 경로)만 밖에 열고, `/internal/*` 은 판별 서버에서만 닿게 둠 | 브라우저가 iframe 을 직접 불러야 함 |
+| B7 | `frame_url` 없음 | `frame_url` 은 불투명 값. CAPTCHA 서버가 서명한 주소(`.../challenges/{id}/frame?origin=..&exp=..&sig=..`)일 수 있고, 클라이언트는 고치지 않고 그대로 엶 | 서명이 깨지지 않게 |
 
 ## v0.3에서 바뀐 점 (v0.3.1)
 
@@ -12,7 +28,7 @@ v0.1(`avp1-protocol-v0.1.md`)과 그 검토 결과는 바이너리 골격의 근
 
 | 번호 | v0.3 | v0.3.1 | 이유 |
 |---|---|---|---|
-| A1 | 캡챠 판정이 클라이언트가 만든 답과 궤적 요약에 기댐, 문제 시드도 클라이언트가 고름 | 판별 서버가 `CAPTCHA_CHALLENGE` `meta.seed` 로 문제를 정하고, `CAPTCHA_VIEW` shown 뒤 DATA 포인터 이벤트로 궤적 요약과 도달 여부를 다시 계산. 클라이언트 요약은 대조용이고, 그 구간 포인터가 없거나 크게 다르면 `fail` | 요약 JSON 은 앱에서 지어낼 수 있음 |
+| A1(v0.3.2 에서 삭제, B4) | 캡챠 판정이 클라이언트가 만든 답과 궤적 요약에 기댐, 문제 시드도 클라이언트가 고름 | 판별 서버가 `CAPTCHA_CHALLENGE` `meta.seed` 로 문제를 정하고, `CAPTCHA_VIEW` shown 뒤 DATA 포인터 이벤트로 궤적 요약과 도달 여부를 다시 계산. 클라이언트 요약은 대조용이고, 그 구간 포인터가 없거나 크게 다르면 `fail` | 요약 JSON 은 앱에서 지어낼 수 있음 |
 | A2 | 보호 행동 때 근거가 모자라면 `insufficient_data` 로 통과(정하지 않은 항목 23) | 근거 부족은 점수가 τ_captcha 이상인 것과 같게 봐서 캡챠. 새 세션의 첫 보호 행동도 같음. 캡챠 단계가 없으면(τ_captcha 0) `BLOCKED`(`insufficient_data`) | DOM 직접 조작 자동화는 이벤트를 남기지 않아 이 길로 빠져나감 |
 | A3 | 클라이언트가 보낸 `asset_error` 는 통과(정하지 않은 항목 24) | 같은 판단에서 1번만 새 챌린지로 다시 띄우고, 또 오면 `BLOCKED`(`block_after_captcha_fail`). CAPTCHA 서버 자체 오류는 정하지 않은 항목 26(가안: 보류) | 클라이언트가 `asset_error` 만 보내면 캡챠를 건너뜀 |
 | A4 | json 수와 BOM 을 두 언어가 다르게 읽음, verify 실패 구분 없음 | json 안 수가 유한하지 않거나 절댓값이 2^53-1 을 넘으면 `E_CONTROL_BODY`. BOM 은 글자로 둠(맨 앞 BOM 이 붙은 json 은 객체가 아니라 `E_CONTROL_BODY`). verify 의 4xx 는 `fail`, 연결 실패와 5xx 만 `error` | 차등 퍼징 F1~F4 |
@@ -149,7 +165,27 @@ flowchart LR
 
 uvicorn은 기본값으로 20초마다 WebSocket ping을 보냅니다. 빈 DATA keepalive(15초)와 ping 가운데 하나만 살아 있어도 프록시 유휴 한도에 걸리지 않습니다.
 
-### CAPTCHA 서버 내부 API (가안)
+### CAPTCHA 서버 API (v0.3.2)
+
+v0.3.2 의 판별 서버와 CAPTCHA 서버 사이 계약입니다(B1, B4). AVP/1 밖의 서버 간 JSON 이고, `/internal/*` 은 판별 서버에서만 닿게 두며 인증은 CAPTCHA 서버 쪽 내부 키 검사를 따릅니다(헤더 이름과 값은 CAPTCHA 서버 문서와 배포 환경변수).
+
+| 순서 | 누가 | 요청 | 응답과 쓰임 |
+|---:|---|---|---|
+| 1 | 판별 서버 | `POST /internal/challenges` `{"session_id":"<WELCOME session_id hex 32자>","provider":"guide_sol"}` | `challenge_id`, `frame_path`(`/challenges/{id}/frame`). 판별 서버는 CAPTCHA 서버의 공개 출처와 `frame_path` 로 `frame_url` 을 만들어 `CAPTCHA_CHALLENGE` 에 실음 |
+| 2 | 클라이언트(브라우저) | `frame_url` 을 iframe 으로 엶 | CAPTCHA 서버가 문제를 그리고 궤적을 판정. 끝나면 iframe 이 부모 창에 `postMessage({type:"actveri-captcha", challenge_id, status, token?})`, `status` 는 `success` 나 `fail` |
+| 3 | 판별 서버 | `POST /internal/verifications/consume` `{"token":"...","session_id":"..."}` | `valid`, `challenge_id`. 토큰마다 1번만 `valid` |
+
+`frame_url` 은 불투명 값입니다(B7). CAPTCHA 서버가 서명한 주소(`.../challenges/{id}/frame?origin=<클라이언트 출처>&exp=..&sig=..`)일 수 있어서, 클라이언트는 쿼리를 붙이거나 고치지 않고 받은 그대로 엽니다. `origin` 값은 판별 서버와 CAPTCHA 서버가 정해 주소에 넣습니다. iframe 이 `postMessage` 의 대상 출처로 쓰므로 클라이언트 페이지 출처와 같아야 하고, 출처가 `null` 인 페이지(`file://`)에서는 쓸 수 없습니다.
+
+`frame_url` 규칙: 절대 URL, 스킴은 `https`. 개발에서만 호스트가 `127.0.0.1` 이나 `localhost` 인 `http` 를 허용합니다(TV84). UTF-8 1,024B 이하입니다. 판별 서버는 만든 주소가 이 규칙을 어기면 챌린지를 보내지 않고 CAPTCHA 서버 오류(`STATE` 사유 4)로 둡니다. 클라이언트도 같은 규칙으로 검사해 어기면 `CAPTCHA_ANSWER`(`frame_error`)를 보냅니다(TV85).
+
+클라이언트는 `message` 이벤트를 아래가 모두 맞을 때만 받습니다. `event.source` 가 그 iframe 의 `contentWindow`, `event.origin` 이 `frame_url` 의 출처, `data.type` 이 `actveri-captcha`, `data.challenge_id` 가 열린 챌린지의 `challenge_id`. 처음 받은 `success` 나 `fail` 하나만 `CAPTCHA_ANSWER` 로 보내고 나머지는 버립니다. `success` 의 `token` 이 없거나 128B 를 넘으면 토큰 없이 `success` 를 보내고 판단은 서버에 맡깁니다(TV87, 서버는 `fail`).
+
+consume 응답 처리: `valid` 가 참이고 응답 `challenge_id` 가 그 세션의 열린 챌린지 id 와 같으면 `pass`. `valid` 거짓, 4xx, `challenge_id` 다름은 `fail`. 연결 실패, 3초 제한 초과, 5xx 는 `error` 입니다. 토큰은 1회용이라 consume 은 자동으로 다시 부르지 않습니다(앞 요청이 실제로는 처리됐으면 두 번째는 `valid` 거짓이 되어 사람을 막음).
+
+아래는 v0.3.1 에셋 중계의 내부 API 입니다. v0.3.2 판별 서버는 쓰지 않고(B2) 기록으로 남깁니다.
+
+### CAPTCHA 서버 내부 API (v0.3.1 에셋 중계, 가안)
 
 AVP/1 밖의 서버 간 JSON입니다. 판별 서버만 바깥으로 부르고, CAPTCHA 서버는 자체 인증이 없는 대신 127.0.0.1(또는 내부망)에만 열어 앱과 외부에서 닿지 않게 합니다. `Origin` 과 `Host` 헤더는 인증으로 쓰지 않습니다.
 
@@ -806,7 +842,35 @@ v0.1 브리프의 "POC 프론트 토글"은 쓰지 않고, 팀 합의 문서대�
 
 연속 윈도우 개수(예: 3개)로 세지 않는 이유는 윈도우가 겹치기 때문입니다. 10초 윈도우를 1초마다 만들면 클릭 하나가 윈도우 10개에 들어가, 실험에서 "연속 3개" 규칙은 사람 세션 55%를 촉발했고 "10초 유지" 규칙은 5%였습니다(합성 스트림, 임시 점수).
 
-### CAPTCHA 중계 (가안, 구조는 확정)
+### CAPTCHA iframe 챌린지 (v0.3.2)
+
+```mermaid
+sequenceDiagram
+    participant A as S(t) LAB(Protocol Client + 페이지)
+    participant J as 판별 서버
+    participant C as CAPTCHA 서버
+    J->>C: POST /internal/challenges {session_id, provider}
+    C-->>J: challenge_id, frame_path
+    J-->>A: CONTROL CAPTCHA_CHALLENGE(frame_url, 에셋 0)
+    J-->>A: STATE CAPTCHA_PENDING
+    A->>C: iframe GET frame_url (그대로)
+    A->>J: DATA(CAPTCHA_VIEW shown)
+    C-->>A: postMessage(actveri-captcha, status, token)
+    A->>J: CONTROL CAPTCHA_ANSWER(success + verification_token 또는 fail)
+    J->>C: POST /internal/verifications/consume {token, session_id}
+    C-->>J: valid, challenge_id
+    J-->>A: CONTROL CAPTCHA_RESULT, STATE(action_allowed + 토큰) 또는 BLOCKED
+    A->>J: DATA(CAPTCHA_VIEW closed)
+```
+
+1. 발동하면 판별 서버가 챌린지를 만들고(3초 제한) `CAPTCHA_CHALLENGE`(`frame_url`, `asset_count` 0, `asset_total_bytes` 0, `meta` `{"kind":"guide_sol"}`)와 `STATE`(3)를 보냅니다. `ASSET_CHUNK` 는 보내지 않습니다(TV74). 만들기에 실패하면 v0.3.1 과 같이 `STATE`(사유 4)입니다.
+2. 클라이언트는 `frame_url` 을 검사하고(위 'CAPTCHA 서버 API') 그대로 iframe 으로 엽니다. `CAPTCHA_CHALLENGE` 를 받은 뒤 10초 안에 iframe `load` 가 없거나 로드 오류면 `CAPTCHA_ANSWER`(`frame_error`)를 보냅니다(TV77). 서버는 이 보고를 같은 판단에서 1번만 받아 새 챌린지를 띄우고(`CAPTCHA_RESULT` `error`, 다음 상태 3), 두 번째는 `BLOCKED`(`block_after_captcha_fail`)입니다(B5, A3 과 같은 규칙).
+3. iframe 이 그려지면 `CAPTCHA_VIEW`(shown)를, 닫으면 (closed)를 넣습니다. 이 구간 DATA 는 S(t) 맥락으로 계속 모으지만 캡챠 판정에는 쓰지 않습니다.
+4. iframe 의 결과는 `CAPTCHA_ANSWER` 로 전합니다. `success` 는 `verification_token` 과 함께(TV75), `fail` 은 토큰 없이(TV76). `answer` 는 `{}` 입니다. `ttl_ms` 안에 결과가 없으면 `timeout` 입니다.
+5. 판별 서버의 처리: `success` 와 토큰이면 consume 결과(위 표)대로 `pass`, `fail`, `error`. 토큰 없는 `success`(TV87), `fail`, iframe 챌린지에 온 `answered` 는 consume 없이 `fail` 입니다. `fail`, `expired`, `timeout`, `cancelled` 는 `BLOCKED`(`block_after_captcha_fail`), `pass` 는 v0.3.1 과 같이 판단 점수가 τ_block 이상이면 `BLOCKED`(`block_above_threshold`), 아니면 통과입니다. consume `error` 는 정하지 않은 항목 26의 가안대로 보호 행동을 보류합니다(`CAPTCHA_RESULT` `error`, 다음 상태는 그때 상태, `STATE` 사유 4). 통과로 두지 않습니다.
+6. 만료, 1회 사용, 늦은 답, FINISH 뒤 DATA, `FINAL` 로 발동한 챌린지 규칙은 아래 v0.3.1 절과 같습니다.
+
+### CAPTCHA 중계 (v0.3.1 에셋 중계, v0.3.2 서버는 쓰지 않음)
 
 판별 서버가 외부에서 받는 연결은 AVP/1 하나뿐이고 CAPTCHA 서버는 앱에서 닿지 않습니다. 그래서 문제, 에셋, 답, 결과를 모두 판별 서버가 AVP/1로 중계하고, 정답은 CAPTCHA 서버 밖으로 나오지 않습니다.
 
@@ -842,7 +906,9 @@ sequenceDiagram
 
 `FINAL` 결과로 발동하면 세션은 `CAPTCHA_RESULT` 를 보낼 때까지 `closing` 에 머물고, 그 뒤(차단이면 `STATE`(BLOCKED) 다음에) `STATE`(ENDED)로 닫습니다. 챌린지가 열려 있는 동안(`CAPTCHA_CHALLENGE` 를 보낸 때부터 `CAPTCHA_RESULT` 를 보낼 때까지)만 서버는 FINISH 뒤 DATA를 받습니다. v0.3.1부터 FINISH 때 이미 열려 있던 챌린지도 같고(A13), 그 챌린지의 결과를 보낸 뒤 세션을 닫습니다. 그 구간의 DATA는 챌린지 화면 이벤트라고 보고 내용을 따로 검사하지 않으며, 그 밖의 FINISH 뒤 DATA는 `E_STATE` 입니다(TV32, TV33).
 
-### CAPTCHA 답의 서버 재계산 (v0.3.1, A1)
+### CAPTCHA 답의 서버 재계산 (v0.3.1, A1, v0.3.2 에서 삭제)
+
+v0.3.2 에서 이 절은 쓰지 않습니다(B4). 궤적 판정은 CAPTCHA 서버가 하고, 판별 서버는 토큰 consume 만 합니다. 아래는 v0.3.1 기록입니다.
 
 클라이언트가 보낸 `answer` 의 문제별 키와 `trajectory` 요약은 앱에서 지어낼 수 있어서 판정 근거로 쓰지 않고 대조용으로만 씁니다. 판정 근거는 판별 서버가 같은 세션 DATA 로 받은 챌린지 화면 포인터 이벤트입니다.
 
@@ -1032,17 +1098,21 @@ ERROR `message` 의 256B는 글자 수가 아니라 UTF-8 바이트 수입니다
 | | 5 | `ttl_ms` | `uvar` | 받은 뒤 답할 수 있는 시간 |
 | | 6 | `asset_count` | `u8` | 뒤따를 에셋 수(0~8) |
 | | 7 | `asset_total_bytes` | `uvar` | 에셋 합(512KiB 이하) |
-| | 8 | `meta` | `json` | 허용 목록 키만(`kind`, `prompt_code`, `seed`(v0.3.1), `assets[].index`, `name`, `type`). 정답 없음, 2,048B 이하 |
+| | 8 | `meta` | `json` | 허용 목록 키만(`kind`, `prompt_code`, `seed`(v0.3.1), `assets[].index`, `name`, `type`). 정답 없음, 2,048B 이하. iframe 챌린지는 `kind` 만 |
+| | 9 | [`frame_url`] | `str` | v0.3.2 선택 묶음(B1). iframe 주소, UTF-8 1,024B 이하(넘으면 `E_CONTROL_TOO_LARGE`, TV79). 불투명 값이라 클라이언트는 그대로 엶. 있으면 `asset_count`, `asset_total_bytes` 는 0 |
 | CAPTCHA_ANSWER `0x08` | 1 | `challenge_id` | `str` | |
-| | 2 | `status` | `u8` | 0 `answered`, 1 `asset_error`, 2 `timeout`, 3 `cancelled` |
-| | 3 | `answer` | `json` | 답(2,048B 이하). `answered` 가 아니면 `{}` 이거나 `trajectory` 만. 모양은 아래 |
+| | 2 | `status` | `u8` | 0 `answered`, 1 `asset_error`(둘은 v0.3.1 에셋 중계), 2 `timeout`, 3 `cancelled`, 4 `success`, 5 `fail`, 6 `frame_error`(v0.3.2 iframe 챌린지) |
+| | 3 | `answer` | `json` | 답(2,048B 이하). iframe 챌린지는 늘 `{}`. 에셋 중계의 모양은 아래 |
+| | 4 | [`verification_token`] | `str` | v0.3.2 선택 묶음(B3). iframe 이 `success` 와 함께 준 1회용 토큰, UTF-8 128B 이하(넘으면 `E_CONTROL_TOO_LARGE`, TV81). `success` 일 때만 실음 |
 | CAPTCHA_RESULT `0x0B` | 1 | `challenge_id` | `str` | |
 | | 2 | `result` | `u8` | 0 `fail`, 1 `pass`, 2 `expired`, 3 `error`(CAPTCHA 서버 오류, 에셋 오류) |
 | | 3 | `next_state` | `u8` | 이어서 보낼 `STATE` 값(4 `CAPTCHA_PASSED`, 7 `BLOCKED`, 2 `SCORING` 같은 판단 전 상태, 에셋 오류로 다시 띄울 때 3 `CAPTCHA_PENDING`). v0.3 서버는 5 `CAPTCHA_FAILED` 를 보내지 않음 |
 
 `CAPTCHA_RESULT` 에는 정답이나 정답과의 차이를 싣지 않습니다. 에이전트가 결과를 보고 답을 고쳐 다시 내는 것을 막기 위해서입니다.
 
-#### CAPTCHA_ANSWER `answer` 의 모양 (v0.3)
+#### CAPTCHA_ANSWER `answer` 의 모양 (v0.3, 에셋 중계)
+
+v0.3.2 에서 `trajectory` 는 없앴습니다(B3). iframe 챌린지의 `answer` 는 `{}` 이고, 판별 서버는 내용을 읽지 않습니다. 아래 표는 v0.3.1 에셋 중계 기록입니다.
 
 `answer` 는 공백 없는 JSON 객체이고 키는 셋으로 나뉩니다. 판별 서버는 객체를 그대로 verify에 넘기고, CAPTCHA 서버가 문제 종류(`meta.kind`)에 맞는 키로 판정합니다.
 
@@ -1171,6 +1241,7 @@ ERROR body의 `code` 는 아래 숫자입니다. 치명 오류는 ERROR 프레�
 | 이벤트 payload | 1,024B | `E_EVENT_TOO_LARGE` |
 | CONTROL body | 8,192B(subtype 제외) | `E_CONTROL_TOO_LARGE` |
 | `params`, `answer`, `meta` | 2,048B | `E_CONTROL_TOO_LARGE` |
+| `frame_url`, `verification_token` | 1,024B, 128B(v0.3.2) | `E_CONTROL_TOO_LARGE` |
 | CAPTCHA 에셋 | 조각 32,768B, 에셋당 16조각, 챌린지당 8개, 합 512KiB | 서버는 챌린지를 보내지 않음. 클라이언트는 `CAPTCHA_ANSWER`(`asset_error`) |
 | CAPTCHA 시간 | 서버의 CAPTCHA 서버 호출 3초, 조각 도착 10초, 답 `ttl_ms`(가안 60초), 서버 대기 `ttl_ms` + 5초 | 사유 4 또는 `expired` |
 | `message` | 256B | `E_CONTROL_TOO_LARGE` |
@@ -1228,7 +1299,7 @@ Binary Protocol 패널의 "JSON(기준) KB/s"와 절감률은 앱이 직접 잽�
 
 ## 골든 테스트 벡터
 
-TS와 Python 코덱은 모든 벡터를 양쪽으로 통과해야 합니다. JSON에서 인코딩한 바이트가 hex와 같아야 하고, hex를 디코딩한 결과가 JSON과 같아야 합니다. 벡터는 Python 3 참조 스크립트로 인코딩하고 다시 디코딩해 일치를 확인했고, 스크립트는 지웠습니다.
+TS와 Python 코덱은 모든 벡터를 양쪽으로 통과해야 합니다. v0.3.2 의 TV74~TV87 은 `test-vectors/avp1-v0.3.2.json` 에 있습니다(iframe 챌린지, 토큰 답, 1,024B 와 128B 경계와 넘침, UTF-8 오류, 잘린 `frame_url`, `frame_url` 세션 검사, `frame_url` 없는 에셋 중계, 토큰 없는 `success`). 바이트는 코덱을 쓰지 않고 이 문서의 배치대로 조립했습니다. 기존 벡터는 바이트와 기대값 모두 그대로이고, TV11~TV13, TV40~TV44 는 v0.3.1 에셋 중계 디코드 벡터로 남습니다. JSON에서 인코딩한 바이트가 hex와 같아야 하고, hex를 디코딩한 결과가 JSON과 같아야 합니다. 벡터는 Python 3 참조 스크립트로 인코딩하고 다시 디코딩해 일치를 확인했고, 스크립트는 지웠습니다.
 
 - 방향 표시: "클라이언트 발신"은 TS 인코더가 만들고 Python 디코더가 읽는 프레임, "서버 발신"은 Python 인코더가 만들고 TS 디코더가 읽는 프레임입니다. 시험은 두 코덱 모두 인코드와 디코드를 다 돌립니다.
 - 비교 규칙: JSON은 파싱한 값끼리 비교합니다. `ai_score` 같은 f32는 양쪽을 f32로 반올림(`Math.fround`, `struct.pack('<f')`)한 뒤 비교하고, 비트 hex도 함께 확인합니다.
@@ -1835,9 +1906,9 @@ v0.1 독립 검토의 항목마다 v0.2에서 어떻게 했는지 적었습니�
 | 6 | `RUN_LABEL`(라벨, 입력 경로)을 서버로 보낼지 | MVP는 보내지 않고 앱 기록 파일에만. 서버에 학습 데이터를 모을 때만 보냄 | 모델 담당 |
 | 7 | 에이전트가 대시보드 점수를 보는 경로(CDP로 대시보드 대상에 붙기, 창 전체 캡처) | 실행 도구가 실험 페이지 URL 대상 하나에만 붙고, 화면 캡처는 그 뷰만 씀 | 클라이언트 담당 |
 | 8 | 휠 이동량 고정 소수점 배율 | 100배 | 모델 담당 |
-| 9 | CAPTCHA 내부 API 모양 | 문제 요청, 에셋 받기, 답 검증 3개 엔드포인트(내부 API 절) | 모델 담당 |
-| 10 | CAPTCHA 에셋 한도와 형식 | 합 512KiB, 조각 32KiB, PNG, JPEG, WebP만 | 모델 담당 |
-| 11 | CAPTCHA 서버 보호 | 인증 없이 127.0.0.1에만 열기. 다른 장비로 옮기면 서버 간 키 추가 | 모델 담당 |
+| 9 | CAPTCHA 내부 API 모양 | v0.3.2에서 정함: 챌린지 만들기와 토큰 consume(CAPTCHA 서버 API 절) | 끝남 |
+| 10 | CAPTCHA 에셋 한도와 형식 | 합 512KiB, 조각 32KiB, PNG, JPEG, WebP만. v0.3.2 iframe 챌린지는 에셋을 쓰지 않음 | 모델 담당(에셋 중계만) |
+| 11 | CAPTCHA 서버 보호 | v0.3.2: iframe 경로만 공개, `/internal/*` 은 판별 서버에서만 닿게 두고 내부 키 검사(B6) | 모델 담당 |
 | 12 | 챌린지 화면 행동을 같은 윈도우에 섞을지 | `CAPTCHA_VIEW` 구간을 따로 표시하고, 모델 입력에서 섞을지는 모델이 정함 | 모델 담당 |
 | 13 | 정답 라벨과 에이전트 실행 기록 보관 | Electron 앱 기록 파일에 `session_id` 와 라벨을 따로 적음. 선로에는 없음 | 모델 담당 |
 | 14 | 자체 미션 사전(`targets`, `routes`) 내용과 변화 슬롯 | 쇼핑 비교 미션 하나, 슬롯 1개, 세션마다 변화 1건, 지연 800~4,000ms | 클라이언트 담당 |
@@ -1851,7 +1922,7 @@ v0.1 독립 검토의 항목마다 v0.2에서 어떻게 했는지 적었습니�
 | 22 | 확장 블록에서 실제로 채울 항목과 `series` 채널, 점 수 | 모델이 계산하는 것만. 채널 4개 × 점 128개, int16 양자화 | 모델 담당 |
 | 23 | 보호 행동 때 근거가 모자란 경우 | v0.3.1에서 정함: 캡챠(A2) | 끝남 |
 | 24 | 보호 행동 판단 중 캡챠 에셋 오류나 CAPTCHA 서버 오류 | v0.3.1에서 클라이언트 에셋 오류는 정함: 1번 다시 띄우고 또 오면 차단(A3). CAPTCHA 서버 오류는 26번 | 끝남(서버 오류는 26) |
-| 25 | `trajectory` 를 판별 모델 입력에 실제로 넣을지 | 선로에는 싣고, 모델에 넣을지는 모델이 정함 | 모델 담당 |
+| 25 | `trajectory` 를 판별 모델 입력에 실제로 넣을지 | v0.3.2에서 `trajectory` 를 선로에서 없앰(B3) | 끝남 |
 | 26 | CAPTCHA 서버 자체가 죽었을 때(챌린지 생성 실패, verify 연결 실패와 5xx) | 가안: 1번 다시 시도한 뒤에도 실패하면 보호 행동을 보류(`STATE` 사유 4 `captcha_server_error`, 통과 아님)하고 사용자에게 잠시 뒤 다시 하라고 안내. 통과로 두면 CAPTCHA 서버 과부하로 모든 세션이 통과하고, 차단으로 두면 사람이 막힘 | 클라이언트 담당, 모델 담당(결정 대기) |
 | 27 | 차단 기준 0.5 와 0.9, 캡챠 기준 | 가안: τ_captcha 0.80, τ_block 0.90 그대로. 캡챠 기준은 AI 캡챠 통과율 s 를 잰 뒤 | 클라이언트 담당, 모델 담당(결정 대기) |
 | 28 | 캡챠를 한 번 통과한 세션에서 점수 0.80~0.90 인 보호 행동을 계속 통과시킬지 | 가안: 통과 뒤 같은 세션에서 보호 행동이 3번을 넘으면 다시 판단(가짜 서버는 아직 구현하지 않음) | 클라이언트 담당, 모델 담당(결정 대기) |

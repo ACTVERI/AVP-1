@@ -167,3 +167,40 @@ def test_v031_decode(v):
                          ids=lambda v: v["id"])
 def test_v031_encode(v):
     assert encode_frame(v["expected"], V31["dict"]).hex(" ").upper() == v["hex"]
+
+
+V32 = json.loads((Path(__file__).parents[2] / "test-vectors" / "avp1-v0.3.2.json").read_text(encoding="utf-8"))
+V32_BY_ID = {v["id"]: v for v in V32["vectors"]}
+
+
+def test_v032_file_has_tv74_to_tv87():
+    assert [v["id"] for v in V32["vectors"]] == [f"TV{n}" for n in range(74, 88)]
+
+
+@pytest.mark.parametrize("v", V32["vectors"], ids=lambda v: v["id"])
+def test_v032_decode(v):
+    buf = _hex(v["hex"])
+    if "error" in v:
+        with pytest.raises(AvpError) as e:
+            decode_frame(buf)
+        assert e.value.code == v["error"]
+    else:
+        assert decode_frame(buf) == v["expected"]
+
+
+@pytest.mark.parametrize("v", [v for v in V32["vectors"] if "expected" in v], ids=lambda v: v["id"])
+def test_v032_encode(v):
+    assert encode_frame(v["expected"]).hex(" ").upper() == v["hex"]
+
+
+def test_v032_encoder_rejects_long_frame_url_and_token():
+    ch = json.loads(json.dumps(V32_BY_ID["TV78"]["expected"]))
+    ch["control"]["frame_url"] += "a"
+    with pytest.raises(AvpError) as e:
+        encode_frame(ch)
+    assert e.value.code == "E_ENCODE"
+    an = json.loads(json.dumps(V32_BY_ID["TV80"]["expected"]))
+    an["control"]["verification_token"] += "t"
+    with pytest.raises(AvpError) as e:
+        encode_frame(an)
+    assert e.value.code == "E_ENCODE"

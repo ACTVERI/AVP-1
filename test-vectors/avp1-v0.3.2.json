@@ -1,0 +1,326 @@
+{
+ "format": "avp1-test-vectors",
+ "version": "0.3.2",
+ "source": "docs/avp1-protocol.md 골든 테스트 벡터 절(TV74~TV87)",
+ "compare": {
+  "f32_fields": [],
+  "note": "avp1-v0.2.json 과 같은 비교 규칙. error 는 두 디코더가 같은 오류를 내야 함. session 은 세션 규칙 기대값이고 코덱은 디코드만 같음. session.client_replay 는 그 규칙을 TS Session 으로 재생해 확인하는 시험, session.server_rule 은 판별 서버가 지킬 규칙"
+ },
+ "vectors": [
+  {
+   "id": "TV74",
+   "name": "CAPTCHA_CHALLENGE iframe(frame_url, 에셋 없음, meta 는 kind 만)",
+   "direction": "server_to_client",
+   "hex": "41 56 01 03 00 00 00 00 0A 00 00 00 C0 AC D8 00 00 00 00 00 F6 00 00 00 0A 20 71 33 5A 74 38 6D 56 77 31 78 4B 70 34 4C 72 4E 37 63 59 65 32 48 73 4A 39 62 46 64 36 47 61 55 01 08 00 00 00 03 E0 D4 03 00 00 14 7B 22 6B 69 6E 64 22 3A 22 67 75 69 64 65 5F 73 6F 6C 22 7D B2 01 68 74 74 70 73 3A 2F 2F 63 61 70 74 63 68 61 2E 65 78 61 6D 70 6C 65 2E 63 6F 6D 2F 63 68 61 6C 6C 65 6E 67 65 73 2F 71 33 5A 74 38 6D 56 77 31 78 4B 70 34 4C 72 4E 37 63 59 65 32 48 73 4A 39 62 46 64 36 47 61 55 2F 66 72 61 6D 65 3F 6F 72 69 67 69 6E 3D 68 74 74 70 73 25 33 41 25 32 46 25 32 46 73 68 6F 70 2E 65 78 61 6D 70 6C 65 2E 63 6F 6D 26 65 78 70 3D 31 37 39 34 31 38 36 30 36 30 26 73 69 67 3D 4A 78 32 62 37 51 6B 39 6D 57 76 34 54 7A 31 70 4C 72 38 73 4E 63 33 79 48 64 36 66 47 61 30 65 55 6F 35 69 52 74 4B 71 58 77 4D",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "CONTROL",
+     "flags": [],
+     "event_count": 0,
+     "seq": 10,
+     "timestamp_us": 14200000,
+     "payload_length": 246
+    },
+    "control": {
+     "subtype": "CAPTCHA_CHALLENGE",
+     "challenge_id": "q3Zt8mVw1xKp4LrN7cYe2HsJ9bFd6GaU",
+     "challenge_no": 1,
+     "window_id": 8,
+     "reason": "action_above_threshold",
+     "ttl_ms": 60000,
+     "asset_count": 0,
+     "asset_total_bytes": 0,
+     "meta": {
+      "kind": "guide_sol"
+     },
+     "frame_url": "https://captcha.example.com/challenges/q3Zt8mVw1xKp4LrN7cYe2HsJ9bFd6GaU/frame?origin=https%3A%2F%2Fshop.example.com&exp=1794186060&sig=Jx2b7Qk9mWv4Tz1pLr8sNc3yHd6fGa0eUo5iRtKqXwM"
+    }
+   }
+  },
+  {
+   "id": "TV75",
+   "name": "CAPTCHA_ANSWER success + verification_token",
+   "direction": "client_to_server",
+   "hex": "41 56 01 03 00 00 00 00 1E 00 00 00 40 D0 1B 01 00 00 00 00 52 00 00 00 08 20 71 33 5A 74 38 6D 56 77 31 78 4B 70 34 4C 72 4E 37 63 59 65 32 48 73 4A 39 62 46 64 36 47 61 55 04 02 7B 7D 2B 76 54 39 6B 71 32 58 72 37 4C 6D 4E 34 70 5A 73 38 59 64 57 31 63 48 66 36 4A 62 47 33 61 45 6F 35 75 52 69 51 78 4B 74 4D 6E 56",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "CONTROL",
+     "flags": [],
+     "event_count": 0,
+     "seq": 30,
+     "timestamp_us": 18600000,
+     "payload_length": 82
+    },
+    "control": {
+     "subtype": "CAPTCHA_ANSWER",
+     "challenge_id": "q3Zt8mVw1xKp4LrN7cYe2HsJ9bFd6GaU",
+     "status": "success",
+     "answer": {},
+     "verification_token": "vT9kq2Xr7LmN4pZs8YdW1cHf6JbG3aEo5uRiQxKtMnV"
+    }
+   }
+  },
+  {
+   "id": "TV76",
+   "name": "CAPTCHA_ANSWER fail(토큰 없음)",
+   "direction": "client_to_server",
+   "hex": "41 56 01 03 00 00 00 00 1E 00 00 00 40 D0 1B 01 00 00 00 00 26 00 00 00 08 20 71 33 5A 74 38 6D 56 77 31 78 4B 70 34 4C 72 4E 37 63 59 65 32 48 73 4A 39 62 46 64 36 47 61 55 05 02 7B 7D",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "CONTROL",
+     "flags": [],
+     "event_count": 0,
+     "seq": 30,
+     "timestamp_us": 18600000,
+     "payload_length": 38
+    },
+    "control": {
+     "subtype": "CAPTCHA_ANSWER",
+     "challenge_id": "q3Zt8mVw1xKp4LrN7cYe2HsJ9bFd6GaU",
+     "status": "fail",
+     "answer": {}
+    }
+   }
+  },
+  {
+   "id": "TV77",
+   "name": "CAPTCHA_ANSWER frame_error(iframe 로드 실패)",
+   "direction": "client_to_server",
+   "hex": "41 56 01 03 00 00 00 00 1E 00 00 00 40 D0 1B 01 00 00 00 00 26 00 00 00 08 20 71 33 5A 74 38 6D 56 77 31 78 4B 70 34 4C 72 4E 37 63 59 65 32 48 73 4A 39 62 46 64 36 47 61 55 06 02 7B 7D",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "CONTROL",
+     "flags": [],
+     "event_count": 0,
+     "seq": 30,
+     "timestamp_us": 18600000,
+     "payload_length": 38
+    },
+    "control": {
+     "subtype": "CAPTCHA_ANSWER",
+     "challenge_id": "q3Zt8mVw1xKp4LrN7cYe2HsJ9bFd6GaU",
+     "status": "frame_error",
+     "answer": {}
+    }
+   }
+  },
+  {
+   "id": "TV78",
+   "name": "CAPTCHA_CHALLENGE 서명 붙은 frame_url 1,024B(한도 안)",
+   "direction": "server_to_client",
+   "hex": "41 56 01 03 00 00 00 00 0A 00 00 00 C0 AC D8 00 00 00 00 00 44 04 00 00 0A 20 71 33 5A 74 38 6D 56 77 31 78 4B 70 34 4C 72 4E 37 63 59 65 32 48 73 4A 39 62 46 64 36 47 61 55 01 08 00 00 00 03 E0 D4 03 00 00 14 7B 22 6B 69 6E 64 22 3A 22 67 75 69 64 65 5F 73 6F 6C 22 7D 80 08 68 74 74 70 73 3A 2F 2F 63 61 70 74 63 68 61 2E 65 78 61 6D 70 6C 65 2E 63 6F 6D 2F 63 68 61 6C 6C 65 6E 67 65 73 2F 71 33 5A 74 38 6D 56 77 31 78 4B 70 34 4C 72 4E 37 63 59 65 32 48 73 4A 39 62 46 64 36 47 61 55 2F 66 72 61 6D 65 3F 6F 72 69 67 69 6E 3D 68 74 74 70 73 25 33 41 25 32 46 25 32 46 73 68 6F 70 2E 65 78 61 6D 70 6C 65 2E 63 6F 6D 26 65 78 70 3D 31 37 39 34 31 38 36 30 36 30 26 73 69 67 3D 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "CONTROL",
+     "flags": [],
+     "event_count": 0,
+     "seq": 10,
+     "timestamp_us": 14200000,
+     "payload_length": 1092
+    },
+    "control": {
+     "subtype": "CAPTCHA_CHALLENGE",
+     "challenge_id": "q3Zt8mVw1xKp4LrN7cYe2HsJ9bFd6GaU",
+     "challenge_no": 1,
+     "window_id": 8,
+     "reason": "action_above_threshold",
+     "ttl_ms": 60000,
+     "asset_count": 0,
+     "asset_total_bytes": 0,
+     "meta": {
+      "kind": "guide_sol"
+     },
+     "frame_url": "https://captcha.example.com/challenges/q3Zt8mVw1xKp4LrN7cYe2HsJ9bFd6GaU/frame?origin=https%3A%2F%2Fshop.example.com&exp=1794186060&sig=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+   }
+  },
+  {
+   "id": "TV79",
+   "name": "CAPTCHA_CHALLENGE frame_url 1,025B E_CONTROL_TOO_LARGE",
+   "direction": "server_to_client",
+   "hex": "41 56 01 03 00 00 00 00 0A 00 00 00 C0 AC D8 00 00 00 00 00 45 04 00 00 0A 20 71 33 5A 74 38 6D 56 77 31 78 4B 70 34 4C 72 4E 37 63 59 65 32 48 73 4A 39 62 46 64 36 47 61 55 01 08 00 00 00 03 E0 D4 03 00 00 14 7B 22 6B 69 6E 64 22 3A 22 67 75 69 64 65 5F 73 6F 6C 22 7D 81 08 68 74 74 70 73 3A 2F 2F 63 61 70 74 63 68 61 2E 65 78 61 6D 70 6C 65 2E 63 6F 6D 2F 63 68 61 6C 6C 65 6E 67 65 73 2F 71 33 5A 74 38 6D 56 77 31 78 4B 70 34 4C 72 4E 37 63 59 65 32 48 73 4A 39 62 46 64 36 47 61 55 2F 66 72 61 6D 65 3F 6F 72 69 67 69 6E 3D 68 74 74 70 73 25 33 41 25 32 46 25 32 46 73 68 6F 70 2E 65 78 61 6D 70 6C 65 2E 63 6F 6D 26 65 78 70 3D 31 37 39 34 31 38 36 30 36 30 26 73 69 67 3D 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61",
+   "error": "E_CONTROL_TOO_LARGE"
+  },
+  {
+   "id": "TV80",
+   "name": "CAPTCHA_ANSWER verification_token 128B(한도 안)",
+   "direction": "client_to_server",
+   "hex": "41 56 01 03 00 00 00 00 1E 00 00 00 40 D0 1B 01 00 00 00 00 A8 00 00 00 08 20 71 33 5A 74 38 6D 56 77 31 78 4B 70 34 4C 72 4E 37 63 59 65 32 48 73 4A 39 62 46 64 36 47 61 55 04 02 7B 7D 80 01 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "CONTROL",
+     "flags": [],
+     "event_count": 0,
+     "seq": 30,
+     "timestamp_us": 18600000,
+     "payload_length": 168
+    },
+    "control": {
+     "subtype": "CAPTCHA_ANSWER",
+     "challenge_id": "q3Zt8mVw1xKp4LrN7cYe2HsJ9bFd6GaU",
+     "status": "success",
+     "answer": {},
+     "verification_token": "tttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttttt"
+    }
+   }
+  },
+  {
+   "id": "TV81",
+   "name": "CAPTCHA_ANSWER verification_token 129B E_CONTROL_TOO_LARGE",
+   "direction": "client_to_server",
+   "hex": "41 56 01 03 00 00 00 00 1E 00 00 00 40 D0 1B 01 00 00 00 00 A9 00 00 00 08 20 71 33 5A 74 38 6D 56 77 31 78 4B 70 34 4C 72 4E 37 63 59 65 32 48 73 4A 39 62 46 64 36 47 61 55 04 02 7B 7D 81 01 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74 74",
+   "error": "E_CONTROL_TOO_LARGE"
+  },
+  {
+   "id": "TV82",
+   "name": "CAPTCHA_ANSWER verification_token 이 UTF-8 이 아님 E_CONTROL_BODY",
+   "direction": "client_to_server",
+   "hex": "41 56 01 03 00 00 00 00 1E 00 00 00 40 D0 1B 01 00 00 00 00 29 00 00 00 08 20 71 33 5A 74 38 6D 56 77 31 78 4B 70 34 4C 72 4E 37 63 59 65 32 48 73 4A 39 62 46 64 36 47 61 55 04 02 7B 7D 02 C3 28",
+   "error": "E_CONTROL_BODY"
+  },
+  {
+   "id": "TV83",
+   "name": "CAPTCHA_CHALLENGE frame_url 길이가 본문 끝을 넘음 E_TRUNCATED",
+   "direction": "server_to_client",
+   "hex": "41 56 01 03 00 00 00 00 0A 00 00 00 C0 AC D8 00 00 00 00 00 5F 00 00 00 0A 20 71 33 5A 74 38 6D 56 77 31 78 4B 70 34 4C 72 4E 37 63 59 65 32 48 73 4A 39 62 46 64 36 47 61 55 01 08 00 00 00 03 E0 D4 03 00 00 14 7B 22 6B 69 6E 64 22 3A 22 67 75 69 64 65 5F 73 6F 6C 22 7D 28 68 74 74 70 73 3A 2F 2F 63 61 70 74 63 68 61 2E 65 78 61 6D 70 6C 65 2E 63 6F 6D 2F",
+   "error": "E_TRUNCATED"
+  },
+  {
+   "id": "TV84",
+   "name": "CAPTCHA_CHALLENGE 개발용 http://127.0.0.1 frame_url",
+   "direction": "server_to_client",
+   "hex": "41 56 01 03 00 00 00 00 0A 00 00 00 C0 AC D8 00 00 00 00 00 8A 00 00 00 0A 20 71 33 5A 74 38 6D 56 77 31 78 4B 70 34 4C 72 4E 37 63 59 65 32 48 73 4A 39 62 46 64 36 47 61 55 01 08 00 00 00 03 E0 D4 03 00 00 14 7B 22 6B 69 6E 64 22 3A 22 67 75 69 64 65 5F 73 6F 6C 22 7D 47 68 74 74 70 3A 2F 2F 31 32 37 2E 30 2E 30 2E 31 3A 38 31 30 30 2F 63 68 61 6C 6C 65 6E 67 65 73 2F 71 33 5A 74 38 6D 56 77 31 78 4B 70 34 4C 72 4E 37 63 59 65 32 48 73 4A 39 62 46 64 36 47 61 55 2F 66 72 61 6D 65",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "CONTROL",
+     "flags": [],
+     "event_count": 0,
+     "seq": 10,
+     "timestamp_us": 14200000,
+     "payload_length": 138
+    },
+    "control": {
+     "subtype": "CAPTCHA_CHALLENGE",
+     "challenge_id": "q3Zt8mVw1xKp4LrN7cYe2HsJ9bFd6GaU",
+     "challenge_no": 1,
+     "window_id": 8,
+     "reason": "action_above_threshold",
+     "ttl_ms": 60000,
+     "asset_count": 0,
+     "asset_total_bytes": 0,
+     "meta": {
+      "kind": "guide_sol"
+     },
+     "frame_url": "http://127.0.0.1:8100/challenges/q3Zt8mVw1xKp4LrN7cYe2HsJ9bFd6GaU/frame"
+    }
+   },
+   "session": {
+    "expect": "show_frame",
+    "client_replay": "ts/test/session-v032.test.ts"
+   }
+  },
+  {
+   "id": "TV85",
+   "name": "CAPTCHA_CHALLENGE https 가 아닌 공개 호스트 frame_url",
+   "direction": "server_to_client",
+   "hex": "41 56 01 03 00 00 00 00 0A 00 00 00 C0 AC D8 00 00 00 00 00 8F 00 00 00 0A 20 71 33 5A 74 38 6D 56 77 31 78 4B 70 34 4C 72 4E 37 63 59 65 32 48 73 4A 39 62 46 64 36 47 61 55 01 08 00 00 00 03 E0 D4 03 00 00 14 7B 22 6B 69 6E 64 22 3A 22 67 75 69 64 65 5F 73 6F 6C 22 7D 4C 68 74 74 70 3A 2F 2F 63 61 70 74 63 68 61 2E 65 78 61 6D 70 6C 65 2E 63 6F 6D 2F 63 68 61 6C 6C 65 6E 67 65 73 2F 71 33 5A 74 38 6D 56 77 31 78 4B 70 34 4C 72 4E 37 63 59 65 32 48 73 4A 39 62 46 64 36 47 61 55 2F 66 72 61 6D 65",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "CONTROL",
+     "flags": [],
+     "event_count": 0,
+     "seq": 10,
+     "timestamp_us": 14200000,
+     "payload_length": 143
+    },
+    "control": {
+     "subtype": "CAPTCHA_CHALLENGE",
+     "challenge_id": "q3Zt8mVw1xKp4LrN7cYe2HsJ9bFd6GaU",
+     "challenge_no": 1,
+     "window_id": 8,
+     "reason": "action_above_threshold",
+     "ttl_ms": 60000,
+     "asset_count": 0,
+     "asset_total_bytes": 0,
+     "meta": {
+      "kind": "guide_sol"
+     },
+     "frame_url": "http://captcha.example.com/challenges/q3Zt8mVw1xKp4LrN7cYe2HsJ9bFd6GaU/frame"
+    }
+   },
+   "session": {
+    "expect": "frame_error",
+    "client_replay": "ts/test/session-v032.test.ts"
+   }
+  },
+  {
+   "id": "TV86",
+   "name": "CAPTCHA_CHALLENGE frame_url 없음(v0.3.1 에셋 중계)",
+   "direction": "server_to_client",
+   "hex": "41 56 01 03 00 00 00 00 0A 00 00 00 C0 AC D8 00 00 00 00 00 42 00 00 00 0A 20 71 33 5A 74 38 6D 56 77 31 78 4B 70 34 4C 72 4E 37 63 59 65 32 48 73 4A 39 62 46 64 36 47 61 55 01 08 00 00 00 03 E0 D4 03 00 00 14 7B 22 6B 69 6E 64 22 3A 22 67 75 69 64 65 5F 73 6F 6C 22 7D",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "CONTROL",
+     "flags": [],
+     "event_count": 0,
+     "seq": 10,
+     "timestamp_us": 14200000,
+     "payload_length": 66
+    },
+    "control": {
+     "subtype": "CAPTCHA_CHALLENGE",
+     "challenge_id": "q3Zt8mVw1xKp4LrN7cYe2HsJ9bFd6GaU",
+     "challenge_no": 1,
+     "window_id": 8,
+     "reason": "action_above_threshold",
+     "ttl_ms": 60000,
+     "asset_count": 0,
+     "asset_total_bytes": 0,
+     "meta": {
+      "kind": "guide_sol"
+     }
+    }
+   },
+   "session": {
+    "expect": "asset_relay",
+    "client_replay": "ts/test/session-v032.test.ts"
+   }
+  },
+  {
+   "id": "TV87",
+   "name": "CAPTCHA_ANSWER success 인데 토큰 없음",
+   "direction": "client_to_server",
+   "hex": "41 56 01 03 00 00 00 00 1E 00 00 00 40 D0 1B 01 00 00 00 00 26 00 00 00 08 20 71 33 5A 74 38 6D 56 77 31 78 4B 70 34 4C 72 4E 37 63 59 65 32 48 73 4A 39 62 46 64 36 47 61 55 04 02 7B 7D",
+   "expected": {
+    "header": {
+     "version": 1,
+     "msg_type": "CONTROL",
+     "flags": [],
+     "event_count": 0,
+     "seq": 30,
+     "timestamp_us": 18600000,
+     "payload_length": 38
+    },
+    "control": {
+     "subtype": "CAPTCHA_ANSWER",
+     "challenge_id": "q3Zt8mVw1xKp4LrN7cYe2HsJ9bFd6GaU",
+     "status": "success",
+     "answer": {}
+    }
+   },
+   "session": {
+    "expect": "server_fail",
+    "server_rule": "판별 서버는 consume 없이 fail, STATE(BLOCKED, block_after_captcha_fail)"
+   }
+  }
+ ]
+}

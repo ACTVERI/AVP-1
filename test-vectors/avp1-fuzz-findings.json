@@ -308,7 +308,8 @@
       "judgement": "디코드 값은 같고(100 == 100.0) 다시 쓴 바이트만 다르다. 명세가 이 차이를 알고 허용한다고 적어 두었으므로 고치지 않음",
       "signatures": [
         "mismatch_reencode|CONTROL.CHANGE_ORDER|json_float",
-        "mismatch_reencode|CONTROL.CAPTCHA_ANSWER|json_float"
+        "mismatch_reencode|CONTROL.CAPTCHA_ANSWER|json_float",
+        "mismatch_reencode|CONTROL.CAPTCHA_CHALLENGE|json_float"
       ],
       "observed_after_fix": {
         "py": {
